@@ -27,7 +27,7 @@ static syscall_hanlder_t syscall_table[] = {
               implementations
 =============================================*/
 void uproc_init() {
-    vme_init((void *(*)(size_t))pmm->alloc, pmm->free);
+    vme_init((void *(*)(int))pmm->alloc, pmm->free);
 
     os->on_irq(100, EVENT_PAGEFAULT, page_fault); //注册页故障处理程序
     os->on_irq(101, EVENT_SYSCALL, syscall); //注册页故障处理程序
