@@ -1,0 +1,9 @@
+#! /bin/bash
+num="1"
+while [ "$num" -lt 32 ];
+do
+echo "$num thread"
+{ time make run mainargs=$num; } |& grep real | sed 's/real/new/g'
+{ time make comp mainargs=$num; } |& grep real | sed 's/real/old/g'
+num=$(($num + $num))
+done
