@@ -59,7 +59,7 @@ void page_map(task_t *task, void *va, phypg_t *page) {
     void *pa = page->pa;
     assert(va != NULL);
 
-    printf("map: %p -> %p\n", va, pa);
+    // printf("map: %p -> %p\n", va, pa);
 
     for (int i = 0; i < NPAGES; i++) {
         if (task->vps[i] == NULL) {
@@ -82,7 +82,7 @@ Context* page_fault(Event e, Context *ctx) {
         if (va == as->area.start) {
             memcpy(page->pa, _init, _init_len);
         }
-        printf("read new page of %p\n", va);
+        // printf("read new page of %p\n", va);
         page_map(mytask(), va, page);
     } else {
         int num = -1;
@@ -95,24 +95,24 @@ Context* page_fault(Event e, Context *ctx) {
         if (num != -1) {
             //write an existed page without protect.
             phypg_t *ori_page = mytask()->pps[num];
-            printf("Clear map prot\n");
+            // printf("Clear map prot\n");
             map(as, va, ori_page->pa, MMAP_NONE);
 
             if (ori_page->refcnt == 1) {
-                printf("Last ref of %p\n", ori_page->pa);
+                // printf("Last ref of %p\n", ori_page->pa);
                 map(as, va, ori_page->pa, MMAP_READ | MMAP_WRITE);
             } else {
                 ori_page->refcnt--;
                 page = alloc_page(page_list, as->pgsize);
                 memcpy(page->pa, ori_page->pa, as->pgsize);
                 mytask()->pps[num] = page;
-                printf("Copy on Write of %p, new physical page = %p\n", va, page->pa);
+                // printf("Copy on Write of %p, new physical page = %p\n", va, page->pa);
                 map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
             }
         } else {
             //write a new page.
             page = alloc_page(page_list, as->pgsize);
-            printf("Write new page of %p\n", va);
+            // printf("Write new page of %p\n", va);
             page_map(mytask(), va, page);
         }
     }
