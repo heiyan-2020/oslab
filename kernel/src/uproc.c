@@ -67,12 +67,14 @@ Context* page_fault(Event e, Context *ctx) {
     void *va = (void *)(e.ref & ~(as->pgsize - 1));
     phypg_t *page = NULL;
     if (e.cause == 1) {
+        //缺页，即要访问的页在页表中不存在
         page = alloc_page(page_list, as->pgsize);
         if (va == as->area.start) {
             memcpy(page->pa, _init, _init_len);
         }
         page_map(mytask(), va, page);
     } else {
+        //越权，即要访问的页不具有权限或不存在
         int num = -1;
         for (int i = 0; i < NPAGES; i++) {
             if (mytask()->vps[i] == va) {
@@ -81,22 +83,24 @@ Context* page_fault(Event e, Context *ctx) {
             }
         }
         if (num != -1) {
+            //页表中存在，但越权
             phypg_t *ori_page = mytask()->pps[num];
-            printf("none\n");
+            printf("Clear map prot\n");
             map(as, va, ori_page->pa, MMAP_NONE);
 
             if (ori_page->refcnt == 1) {
-                printf("last ref\n");
+                printf("Last ref of %p\n", ori_page->pa);
                 map(as, va, ori_page->pa, MMAP_READ | MMAP_WRITE);
             } else {
                 ori_page->refcnt--;
                 page = alloc_page(page_list, as->pgsize);
                 memcpy(page->pa, ori_page->pa, as->pgsize);
                 mytask()->pps[num] = page;
-                printf("cow\n");
+                printf("Copy on Write of %p, new physical page = %p\n", va, page->pa);
                 map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
             }
         } else {
+            //页表不存在且越权
             page = alloc_page(page_list, as->pgsize);
             page_map(mytask(), va, page);
         }
