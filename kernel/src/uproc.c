@@ -67,7 +67,7 @@ Context* page_fault(Event e, Context *ctx) {
     void *va = (void *)(e.ref & ~(as->pgsize - 1));
     phypg_t *page = NULL;
     if (e.cause == 1) {
-        //缺页，即要访问的页在页表中不存在
+        //read a new page.
         page = alloc_page(page_list, as->pgsize);
         if (va == as->area.start) {
             memcpy(page->pa, _init, _init_len);
@@ -75,7 +75,6 @@ Context* page_fault(Event e, Context *ctx) {
         printf("read new page of %p\n", va);
         page_map(mytask(), va, page);
     } else {
-        //越权，即要访问的页不具有权限或不存在
         int num = -1;
         for (int i = 0; i < NPAGES; i++) {
             if (mytask()->vps[i] == va) {
@@ -84,7 +83,7 @@ Context* page_fault(Event e, Context *ctx) {
             }
         }
         if (num != -1) {
-            //页表中存在，但越权
+            //write an existed page without protect.
             phypg_t *ori_page = mytask()->pps[num];
             printf("Clear map prot\n");
             map(as, va, ori_page->pa, MMAP_NONE);
@@ -101,7 +100,7 @@ Context* page_fault(Event e, Context *ctx) {
                 map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
             }
         } else {
-            //页表不存在且越权
+            //write a new page.
             page = alloc_page(page_list, as->pgsize);
             printf("Write new page of %p\n", va);
             page_map(mytask(), va, page);
