@@ -93,8 +93,8 @@ Context* page_fault(Event e, Context *ctx) {
                 page = alloc_page(page_list, as->pgsize);
                 memcpy(page->pa, ori_page->pa, as->pgsize);
                 mytask()->pps[num] = page;
-                map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
                 printf("cow\n");
+                map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
             }
         } else {
             page = alloc_page(page_list, as->pgsize);
