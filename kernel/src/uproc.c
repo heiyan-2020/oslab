@@ -173,14 +173,13 @@ void syscall_fork(Context *ctx) {
         if (va == NULL) continue;
 
         // void *pa = mytask()->pps[i]->pa;
-        void *pa = alloc_page(page_list, mytask()->as.pgsize);
-        memcpy(pa, mytask()->pps[i], mytask()->as.pgsize);
-        printf("va = %p, pa = %p\n", va, pa);
-        map(&child->as, va, pa, MMAP_READ | MMAP_WRITE);
+        phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
+        memcpy(page->pa, mytask()->pps[i], mytask()->as.pgsize);
+        map(&child->as, va, page->pa, MMAP_READ | MMAP_WRITE);
         // map(&mytask()->as, va, pa, MMAP_NONE);
         // map(&mytask()->as, va, pa, MMAP_READ); //mark as non-writable.
         child->vps[i] = va;
-        child->pps[i] = pa;
+        child->pps[i] = page->pa;
         mytask()->pps[i]->refcnt++;
     }
     assert(child->context->GPRx == 0);
