@@ -24,6 +24,7 @@ static syscall_hanlder_t syscall_table[] = {
     [SYS_exit] = syscall_exit,
 };
 
+#ifdef STRACE
 static char* syscall_name[] = {
     [SYS_kputc] = "kputc",
     [SYS_getpid] = "getpid",
@@ -33,6 +34,7 @@ static char* syscall_name[] = {
     [SYS_wait] = "wait",
     [SYS_exit] = "exit",
 };
+#endif
 /*============================================
               implementations
 =============================================*/
