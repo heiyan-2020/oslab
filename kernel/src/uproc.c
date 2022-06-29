@@ -102,6 +102,7 @@ Context* page_fault(Event e, Context *ctx) {
         } else {
             //页表不存在且越权
             page = alloc_page(page_list, as->pgsize);
+            printf("Write new page of %p\n", va);
             page_map(mytask(), va, page);
         }
     }
