@@ -182,6 +182,7 @@ void syscall_wait(Context *ctx) {
 }
 
 void syscall_exit(Context *ctx) {
+    printf("exit\n");
     mytask()->state = DEAD;
     ctx->GPRx = ctx->GPR1; //返回值wait会用到
     while (1);
