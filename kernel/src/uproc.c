@@ -175,7 +175,7 @@ void syscall_fork(Context *ctx) {
         // void *pa = mytask()->pps[i]->pa;
         void *pa = alloc_page(page_list, mytask()->as.pgsize);
         memcpy(pa, mytask()->pps[i], mytask()->as.pgsize);
-        printf("va = %p\n", va);
+        printf("va = %p, pa = %p\n", va, pa);
         map(&child->as, va, pa, MMAP_READ | MMAP_WRITE);
         // map(&mytask()->as, va, pa, MMAP_NONE);
         // map(&mytask()->as, va, pa, MMAP_READ); //mark as non-writable.
