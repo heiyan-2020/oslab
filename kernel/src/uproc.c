@@ -179,7 +179,7 @@ void syscall_fork(Context *ctx) {
         // map(&mytask()->as, va, pa, MMAP_NONE);
         // map(&mytask()->as, va, pa, MMAP_READ); //mark as non-writable.
         child->vps[i] = va;
-        child->pps[i] = page->pa;
+        child->pps[i] = page;
         mytask()->pps[i]->refcnt++;
     }
     assert(child->context->GPRx == 0);
