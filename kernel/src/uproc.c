@@ -176,7 +176,7 @@ void syscall_fork(Context *ctx) {
 
         map(&child->as, va, pa, MMAP_READ);
         map(&mytask()->as, va, pa, MMAP_NONE);
-        map(&mytask()->as, va, pa, MMAP_READ); //mark as non-writable.
+        map(&mytask()->as, va, pa, MMAP_READ | MMAP_WRITE); //mark as non-writable.
         child->vps[i] = va;
         child->pps[i] = pa;
         mytask()->pps[i]->refcnt++;
