@@ -23,6 +23,16 @@ static syscall_hanlder_t syscall_table[] = {
     [SYS_wait] = syscall_wait,
     [SYS_exit] = syscall_exit,
 };
+
+static char* syscall_name[] = {
+    [SYS_kputc] = "kputc",
+    [SYS_getpid] = "getpid",
+    [SYS_sleep] = "sleep",
+    [SYS_uptime] = "uptime",
+    [SYS_fork] = "fork",
+    [SYS_wait] = "wait",
+    [SYS_exit] = "exit",
+};
 /*============================================
               implementations
 =============================================*/
@@ -112,6 +122,9 @@ Context* page_fault(Event e, Context *ctx) {
 
 Context* syscall(Event e, Context *ctx) {
     // iset(true);
+    #ifdef STRACE
+    printf("[strace]%s\n", syscall_name[ctx->GPRx]);
+    #endif
     syscall_table[ctx->GPRx](ctx);
     // iset(false);
     return NULL;
@@ -139,7 +152,6 @@ void syscall_uptime(Context *ctx) {
 }
 
 void syscall_fork(Context *ctx) {
-    printf("fork\n");
     task_t *child = pmm->alloc(sizeof (task_t));
     char *name = "_child";
     char *child_name = pmm->alloc(strlen(child->name) + strlen(name) + 4);
@@ -182,7 +194,6 @@ void syscall_wait(Context *ctx) {
 }
 
 void syscall_exit(Context *ctx) {
-    printf("exit\n");
     mytask()->state = DEAD;
     ctx->GPRx = ctx->GPR1; //返回值wait会用到
     while (1);

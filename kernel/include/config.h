@@ -15,4 +15,6 @@
 /*  whether open devices.   */
 // #define LOCAL_DEV
 
+#define STRACE
+
 #endif
