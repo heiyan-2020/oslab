@@ -72,6 +72,7 @@ Context* page_fault(Event e, Context *ctx) {
         if (va == as->area.start) {
             memcpy(page->pa, _init, _init_len);
         }
+        printf("read new page of %p\n", va);
         page_map(mytask(), va, page);
     } else {
         //越权，即要访问的页不具有权限或不存在
