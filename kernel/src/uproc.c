@@ -82,11 +82,12 @@ Context* page_fault(Event e, Context *ctx) {
         }
         if (num != -1) {
             phypg_t *ori_page = mytask()->pps[num];
+            printf("none\n");
             map(as, va, ori_page->pa, MMAP_NONE);
 
             if (ori_page->refcnt == 1) {
-                map(as, va, ori_page->pa, MMAP_READ | MMAP_WRITE);
                 printf("last ref\n");
+                map(as, va, ori_page->pa, MMAP_READ | MMAP_WRITE);
             } else {
                 ori_page->refcnt--;
                 page = alloc_page(page_list, as->pgsize);
