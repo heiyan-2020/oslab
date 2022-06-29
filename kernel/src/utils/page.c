@@ -15,6 +15,7 @@ void page_list_make(phypg_list_t *list) {
 }
 
 phypg_t *alloc_page(phypg_list_t *list, int pgsize) {
+    printf("pgsize=%d\n", pgsize);
     phypg_t *page = pmm->alloc(sizeof(phypg_t));
     page->pa = pmm->alloc(pgsize);
     page->refcnt = 1;
