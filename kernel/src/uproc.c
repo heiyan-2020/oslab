@@ -118,7 +118,6 @@ Context* page_fault(Event e, Context *ctx) {
             page_map(mytask(), va, page);
         }
     }
-    assert(page != NULL);
     return NULL;
 }
 
