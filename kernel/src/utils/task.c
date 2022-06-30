@@ -51,11 +51,6 @@ void task_init(task_t *task, Context *ctx, const char *name) {
     task->child_ret = MAGIC_NUM;
     spin_init(&task->lk, name);
     task->pid = allocpid();
-    if (task->pid > 2000) {
-        while (1) {
-            printf("sizeof(task_t) = %d\n", sizeof(task_t));
-        }
-    }
     for (int i = 0; i < NPAGES; i++) {
         task->vps[i] = NULL;
     }
