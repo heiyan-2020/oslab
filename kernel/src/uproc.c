@@ -162,7 +162,7 @@ void syscall_fork(Context *ctx) {
     assert(!ienabled());
     task_t *child = pmm->alloc(sizeof (task_t));
     char *name = "_child";
-    char *child_name = pmm->alloc(strlen(child->name) + strlen(name) + 4);
+    char *child_name = pmm->alloc(strlen(mytask()->name) + strlen(name) + 4);
     strcpy(child_name, mytask()->name);
     printf("child_name=%s\n", child_name);
     strcat(child_name, name);
