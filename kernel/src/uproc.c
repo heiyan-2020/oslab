@@ -210,6 +210,7 @@ void syscall_wait(Context *ctx) {
     while (has_children && cur->child_ret == MAGIC_NUM) {
         yield();
     }
+    cur->child_ret = MAGIC_NUM;
 }
 
 void syscall_exit(Context *ctx) {
