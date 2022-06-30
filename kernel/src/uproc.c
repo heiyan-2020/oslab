@@ -101,10 +101,12 @@ Context* page_fault(Event e, Context *ctx) {
             //write an existed page without protect.
             phypg_t *ori_page = mytask()->pps[num];
             MEMLOG("Clear map prot\n");
+            assert((uintptr_t)ori_page->pa == ROUNDDOWN(ori_page->pa,as->pgsize));
             map(as, va, ori_page->pa, MMAP_NONE);
 
             if (ori_page->refcnt == 1) {
                 MEMLOG("Last ref of %p on %p\n", ori_page->pa, va);
+                assert((uintptr_t)ori_page->pa == ROUNDDOWN(ori_page->pa,as->pgsize));
                 map(as, va, ori_page->pa, MMAP_READ | MMAP_WRITE);
             } else {
                 ori_page->refcnt--;
@@ -112,6 +114,7 @@ Context* page_fault(Event e, Context *ctx) {
                 memcpy(page->pa, ori_page->pa, as->pgsize);
                 mytask()->pps[num] = page;
                 MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
+                assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
                 map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
             }
         } else {
