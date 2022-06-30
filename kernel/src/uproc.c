@@ -154,6 +154,7 @@ void syscall_uptime(Context *ctx) {
 
 void syscall_fork(Context *ctx) {
     task_t *child = pmm->alloc(sizeof (task_t));
+    child->parent = mytask();
     char *name = "_child";
     char *child_name = pmm->alloc(strlen(child->name) + strlen(name) + 4);
     strcpy(child_name, mytask()->name);
