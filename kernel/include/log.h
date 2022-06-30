@@ -32,4 +32,15 @@ void unlock_();
     #define COND_LOG(...)
     #define LOG_INIT()
 #endif
+#ifdef MEM_LOG
+    #define MEMLOG(fmt, ...) do {\
+        for (int i = 0; i < cpu_current() * 50; i++) {\
+            printf(" ");\
+        }\
+        printf("[%s %d][%d]: ", __func__, __LINE__, cpu_current()); \
+        printf(fmt, ##__VA_ARGS__);\
+    } while (0)
+#else
+    #define MEMLOG(...)
+#endif
 #endif
