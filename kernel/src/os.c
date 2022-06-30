@@ -57,9 +57,10 @@ static void os_init() {
 extern unsigned int _init_len;
 static void os_run() {
     printf("Hello, World\n");
-    if (_init_len > 6000) {
-        while (1);
-    }
+    // if (_init_len > 3000) {
+    //     while (1);
+    // }
+    while (1);
     iset(true);
     while (1);
 }
