@@ -195,7 +195,6 @@ void syscall_fork(Context *ctx) {
 }
 
 void syscall_wait(Context *ctx) {
-    assert(0);
     kmt->spin_lock(&schedule_lk);
     bool has_children = false;
     task_t *cur = mytask();
