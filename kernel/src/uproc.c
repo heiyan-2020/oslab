@@ -77,7 +77,7 @@ void page_map(task_t *task, void *va, phypg_t *page) {
 Context* page_fault(Event e, Context *ctx) {
     AddrSpace *as = &mytask()->as;
     void *va = (void *)(e.ref & ~(as->pgsize - 1));
-    assert((uintptr_t)va != ROUNDDOWN(va,as->pgsize));
+    assert((uintptr_t)va == ROUNDDOWN(va,as->pgsize));
     phypg_t *page = NULL;
     if (e.cause == 1) {
         //read a new page.
