@@ -164,9 +164,7 @@ void syscall_fork(Context *ctx) {
     char *name = "_child";
     char *child_name = pmm->alloc(strlen(mytask()->name) + strlen(name) + 4);
     strcpy(child_name, mytask()->name);
-    printf("child_name=%s\n", child_name);
     strcat(child_name, name);
-    printf("parent->name = %s, child->name = %s\n", mytask()->name, child_name);
 
     ucreate(child, child_name);
     uintptr_t rsp0 = child->context->rsp0;
