@@ -56,7 +56,7 @@ static void os_init() {
 }
 
 static void os_run() {
-    // printf("Hello, World\n");
+    printf("Hello, World\n");
     iset(true);
     while (1);
 }
