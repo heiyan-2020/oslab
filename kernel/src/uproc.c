@@ -160,7 +160,6 @@ void syscall_uptime(Context *ctx) {
 
 void syscall_fork(Context *ctx) {
     task_t *child = pmm->alloc(sizeof (task_t));
-    child->parent = mytask();
     char *name = "_child";
     char *child_name = pmm->alloc(strlen(child->name) + strlen(name) + 4);
     strcpy(child_name, mytask()->name);
@@ -175,6 +174,7 @@ void syscall_fork(Context *ctx) {
     child->context->rsp0 = rsp0;
     child->context->cr3 = cr3;
     child->context->GPRx = 0;
+    child->parent = mytask();
 
     for (int i = 0; i < NPAGES; i++) {
         void *va = mytask()->vps[i];
