@@ -159,7 +159,7 @@ void syscall_uptime(Context *ctx) {
 }
 
 void syscall_fork(Context *ctx) {
-    iset(false);
+    assert(!ienabled());
     task_t *child = pmm->alloc(sizeof (task_t));
     char *name = "_child";
     char *child_name = pmm->alloc(strlen(child->name) + strlen(name) + 4);
@@ -195,7 +195,6 @@ void syscall_fork(Context *ctx) {
     }
     assert(child->context->GPRx == 0);
     ctx->GPRx = 1;
-    iset(true);
 }
 
 void syscall_wait(Context *ctx) {
