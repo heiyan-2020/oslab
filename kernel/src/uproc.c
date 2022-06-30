@@ -207,14 +207,30 @@ void syscall_wait(Context *ctx) {
         itr = itr->next;
     }
     kmt->spin_unlock(&schedule_lk);
-    while (has_children && cur->child_ret == MAGIC_NUM) {
-        yield();
+    if (!has_children) {
+        ctx->GPRx = -1;
+    } else {
+        while (cur->child_ret == MAGIC_NUM) {
+            yield();
+        }
+        void *vaddr = (void *)ctx->GPR1;
+        void *va_start = (void *)ROUNDDOWN(vaddr, cur->as.pgsize);
+        int offset = vaddr - va_start;
+        for (int i = 0; i < NPAGES; i++) {
+            if (cur->vps[i] == va_start) {
+                void *pa_start = cur->pps[i]->pa;
+                *(int *)(pa_start + offset) = cur->child_ret;
+                cur->child_ret = MAGIC_NUM;
+                ctx->GPRx = 0;
+                return;
+            }
+        }
+        assert(0);
     }
-    cur->child_ret = MAGIC_NUM;
 }
 
 void syscall_exit(Context *ctx) {
     ctx->GPRx = ctx->GPR1; //返回值wait会用到
-    mytask()->parent->child_ret = ctx->GPRx;
+    mytask()->parent->child_ret = ctx->GPR1;
     exit();
 }
