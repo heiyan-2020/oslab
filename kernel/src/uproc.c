@@ -183,6 +183,7 @@ void syscall_fork(Context *ctx) {
         phypg_t *page = mytask()->pps[i];
         // phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
         // memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
+        assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
         map(&child->as, va, page->pa, MMAP_READ);
         map(&mytask()->as, va, page->pa, MMAP_NONE);
         map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
