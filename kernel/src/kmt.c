@@ -304,6 +304,7 @@ void handler_SLEEPY(task_t *task, Context *ctx) {
 }
 
 void handler_DEAD(task_t *task, Context *ctx) {
+    printf("haha\n");
     panic_on(task->state != DEAD, "Unsleepy thread enters sleepy handler\n");
     panic_on(ienabled(), "Interrupt enabled in scheculer\n");
     
