@@ -101,7 +101,7 @@ Context* page_fault(Event e, Context *ctx) {
             map(as, va, ori_page->pa, MMAP_NONE);
 
             if (ori_page->refcnt == 1) {
-                printf("Last ref of %p\n", ori_page->pa);
+                printf("Last ref of %p on %p\n", ori_page->pa, va);
                 map(as, va, ori_page->pa, MMAP_READ | MMAP_WRITE);
             } else {
                 ori_page->refcnt--;
