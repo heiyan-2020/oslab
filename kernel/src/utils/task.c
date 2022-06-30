@@ -52,7 +52,9 @@ void task_init(task_t *task, Context *ctx, const char *name) {
     spin_init(&task->lk, name);
     task->pid = allocpid();
     if (task->pid > 100) {
-        while (1);
+        while (1) {
+            printf("bugu\n");
+        }
     }
     for (int i = 0; i < NPAGES; i++) {
         task->vps[i] = NULL;
