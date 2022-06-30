@@ -85,6 +85,7 @@ Context* page_fault(Event e, Context *ctx) {
             memcpy(page->pa, _init, _init_len);
         }
         MEMLOG("read new page of %p\n", va);
+        printf("%p\n", ctx->rip);
         page_map(mytask(), va, page);
     } else {
         int num = -1;
