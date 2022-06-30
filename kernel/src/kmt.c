@@ -146,7 +146,6 @@ Context *schedule(Event ev, Context *context) {
     panic_on(ienabled(), "\n");
 
     spin_lock(&schedule_lk);
-    printf("first\n");
     task_t *cur = mytask();
 
     task_t *round_begin = cur == idles_[mycpu()->cpuno] ? tlist_->head : cur->next;
