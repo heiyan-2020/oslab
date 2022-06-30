@@ -59,6 +59,9 @@ int ucreate(task_t *task, char *name) {
 
 void page_map(task_t *task, void *va, phypg_t *page) {
     void *pa = page->pa;
+    while (va == NULL) {
+        printf("hello, world\n");
+    }
     assert(va != NULL);
 
     // printf("map: %p -> %p\n", va, pa);
