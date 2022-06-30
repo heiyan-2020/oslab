@@ -174,12 +174,12 @@ void syscall_fork(Context *ctx) {
         void *va = mytask()->vps[i];
         if (va == NULL) continue;
 
-        // void *pa = mytask()->pps[i]->pa;
-        phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
-        memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
-        map(&child->as, va, page->pa, MMAP_READ | MMAP_WRITE);
-        // map(&mytask()->as, va, pa, MMAP_NONE);
-        // map(&mytask()->as, va, pa, MMAP_READ); //mark as non-writable.
+        phypg_t *page = mytask()->pps[i];
+        // phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
+        // memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
+        map(&child->as, va, page->pa, MMAP_READ);
+        map(&mytask()->as, va, page->pa, MMAP_NONE);
+        map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
         child->vps[i] = va;
         child->pps[i] = page;
         mytask()->pps[i]->refcnt++;
