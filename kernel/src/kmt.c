@@ -153,7 +153,7 @@ Context *schedule(Event ev, Context *context) {
     task_t *itr = round_begin;
 
     state_table[cur->state](cur, context); //查表状态迁移
-
+    printf("sadkjas\n");
     do {
         if (itr->state == RUNNABLE && check_race(itr)) {
 
