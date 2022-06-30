@@ -71,7 +71,7 @@ void page_map(task_t *task, void *va, phypg_t *page) {
         }
     }
     assert((uintptr_t)va == ROUNDDOWN(va,task->as.pgsize));
-    assert((uintptr_t)va == ROUNDDOWN(va,task->as.pgsize));
+    assert((uintptr_t)pa == ROUNDDOWN(pa,task->as.pgsize));
     map(&task->as, va, pa, MMAP_READ | MMAP_WRITE);
 }
 
