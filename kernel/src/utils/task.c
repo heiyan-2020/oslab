@@ -33,6 +33,7 @@ void task_list_remove(task_list_t *list, task_t *node) {
     node->prev->next = node->next;
     node->next->prev = node->prev;
     pmm->free(node);
+    printf("return\n");
 }
 
 task_t *task_list_pop(task_list_t *list) {

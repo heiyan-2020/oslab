@@ -69,7 +69,6 @@ int kcreate(task_t *task, const char *name, void (*entry)(void *arg), void *arg)
 void teardown(task_t *task) {
     panic_on(task->state != DEAD, "Reap some active tasks\n");
     panic_on(schedule_lk.locked == 0, "schedule_lk should be locked\n");
-    printf("sadas\n");
     task_list_remove(tlist_, task);
 }
 
