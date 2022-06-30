@@ -80,7 +80,7 @@ void spin_init(spinlock_t *lk, const char *name) {
 
 void spin_lock(spinlock_t *lk) {
     push_off();
-    // LOG("%s\n", lk->name);
+    LOG("%s: %s\n", mytask()->name, lk->name);
     COND_LOG(holding(lk), "double acquire of %s[%d]\n",lk->name, lk->cpu->cpuno);
     panic_on(holding(lk), "double acquire\n");
     while (atomic_xchg(&lk->locked, 1));
