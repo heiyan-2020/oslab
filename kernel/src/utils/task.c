@@ -29,7 +29,6 @@ void task_list_remove(task_list_t *list, task_t *node) {
     }
 
     panic_on(itr == list->rear, "Node not exists\n");
-    printf("find it\n");
     node->prev->next = node->next;
     node->next->prev = node->prev;
     pmm->free(node);
