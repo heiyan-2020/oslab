@@ -14,7 +14,6 @@ MODULE_DEF(uproc) = {
 =============================================*/
 phypg_list_t *page_list;
 extern spinlock_t schedule_lk;
-#define MAGIC -2848
 static syscall_hanlder_t syscall_table[] = {
     [SYS_kputc] = syscall_kputc,
     [SYS_getpid] = syscall_getpid,
@@ -201,7 +200,7 @@ void syscall_wait(Context *ctx) {
         itr = itr->next;
     }
     kmt->spin_unlock(&schedule_lk);
-    while (has_children && cur->child_ret == MAGIC) {
+    while (has_children && cur->child_ret == MAGIC_NUM) {
         yield();
     }
 }

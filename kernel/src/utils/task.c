@@ -49,7 +49,7 @@ void task_init(task_t *task, Context *ctx, const char *name) {
     task->cpu = mycpu();
     task->state = RUNNABLE;
     task->alarm = false;
-    task->child_ret = -1;
+    task->child_ret = MAGIC_NUM;
     spin_init(&task->lk, name);
     task->pid = allocpid();
     
