@@ -13,7 +13,8 @@ MODULE_DEF(uproc) = {
               global variables
 =============================================*/
 phypg_list_t *page_list;
-
+extern spinlock_t schedule_lk;
+#define MAGIC -2848
 static syscall_hanlder_t syscall_table[] = {
     [SYS_kputc] = syscall_kputc,
     [SYS_getpid] = syscall_getpid,
@@ -188,9 +189,20 @@ void syscall_fork(Context *ctx) {
 }
 
 void syscall_wait(Context *ctx) {
-    task_t *itr;
-    for (itr = mytask()->children->head->next; itr != mytask()->children->rear; itr = itr->next) {
-
+    kmt->spin_lock(&schedule_lk);
+    bool has_children = false;
+    task_t *cur = mytask();
+    task_t *itr = tlist_->head->next;
+    while (itr != tlist_->head) {
+        if (itr->parent == cur) {
+            has_children = true;
+            break;
+        }
+        itr = itr->next;
+    }
+    kmt->spin_unlock(&schedule_lk);
+    while (has_children && cur->child_ret == MAGIC) {
+        yield();
     }
 }
 

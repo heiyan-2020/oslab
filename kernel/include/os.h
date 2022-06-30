@@ -66,12 +66,12 @@ struct task {
   spinlock_t        lk; //lock per task, in order to ganruantee read mutually.
   int               alarm;
   int               pid;
+  int               child_ret;
   enum thread_state state;
   const char        *name; //for debugging.
   struct task       *prev;
   struct task       *next; //tasks are arranged in a linked list.
   struct task       *parent;
-  task_list_t       *children;
   Context           *context;
   AddrSpace         as;
   void              *vps[NPAGES]; //allocated virtual pages.
