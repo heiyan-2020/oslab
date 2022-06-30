@@ -180,14 +180,14 @@ void syscall_fork(Context *ctx) {
         void *va = mytask()->vps[i];
         if (va == NULL) continue;
 
-        phypg_t *page = mytask()->pps[i];
-        // phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
-        // memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
+        // phypg_t *page = mytask()->pps[i];
+        phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
+        memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
         printf("%d parent=%d, %p -> %p\n", mytask()->pid, mytask()->parent->pid, va, page->pa);
         assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
-        map(&child->as, va, page->pa, MMAP_READ);
-        map(&mytask()->as, va, page->pa, MMAP_NONE);
-        map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
+        map(&child->as, va, page->pa, MMAP_READ | MMAP_WRITE);
+        // map(&mytask()->as, va, page->pa, MMAP_NONE);
+        // map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
         child->vps[i] = va;
         child->pps[i] = page;
         page->refcnt++;
