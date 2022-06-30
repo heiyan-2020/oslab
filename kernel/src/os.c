@@ -54,9 +54,10 @@ static void os_init() {
 #endif
 
 }
-
+extern unsigned int _init_len;
 static void os_run() {
     printf("Hello, World\n");
+    printf("%d\n", _init_len);
     iset(true);
     while (1);
 }
