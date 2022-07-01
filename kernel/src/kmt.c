@@ -31,7 +31,7 @@ static state_handler_t state_table[] = {
     [SLEEPY] = handler_SLEEPY,
     [SLEEPING] = handler_ERROR,
     [BLOCKED] = handler_ERROR,
-    [DEAD] = handler_DEAD,
+    [DEAD] = handler_ERROR,
 };
 
 #define NONE -1
@@ -163,6 +163,7 @@ Context *schedule(Event ev, Context *context) {
 
     state_table[cur->state](cur, context); //查表状态迁移
     do {
+        task_t *temp = itr->next;
         if (itr->state == RUNNABLE && check_race(itr)) {
 
             itr->state = RUNNING;
@@ -174,8 +175,10 @@ Context *schedule(Event ev, Context *context) {
             panic_on(ienabled(), "\n");
             spin_unlock(&schedule_lk);
             return itr->context;
+        } else if (itr->state == DEAD && itr != mytask()) {
+            handler_DEAD(itr, context);
         }
-        itr = itr->next;
+        itr = temp;
     } while (itr != round_begin);
 
     itr = idles_[mycpu()->cpuno];
