@@ -87,10 +87,10 @@ void virt_list_insert(virtpg_list_t *list, virtpg_t *node) {
         itr = itr->next;
     }
     assert(itr->va != node->va); //no same va;
-    itr->next->prev = node;
-    node->prev = itr;
-    node->next = itr->next;
-    itr->next = node;
+    itr->prev->next = node;
+    node->prev = itr->prev;
+    node->next = itr;
+    itr->prev = node;
 }
 
 void virt_list_remove(virtpg_list_t *list, virtpg_t *node) {
