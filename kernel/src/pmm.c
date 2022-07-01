@@ -281,6 +281,7 @@ static void *kalloc_safe(size_t size) {
   iset(false);
   void *ret = kalloc(size);
   panic_on(ret == NULL, "return NUll pointer\n");
+  printf("alloc %d bytes on %p\n", size, ret);
   if (i) iset(true);
   return ret;
 }
@@ -289,6 +290,7 @@ static void kfree_safe(void *ptr) {
   int i = ienabled();
   iset(false);
   kfree(ptr);
+  printf("free %p\n", ptr);
   if (i) iset(true);
 }
 
