@@ -259,7 +259,7 @@ void syscall_mmap(Context *ctx) {
             assert(flags = MAP_PRIVATE);
             void *end = addr_bound + len;
             ctx->GPRx = (uint64_t)addr_bound;
-            printf("addr = %p\n", addr_bound);
+            // printf("addr = %p\n", addr_bound);
             for (int i = 0; i < NPAGES; i++) {
                 if (mytask()->vps[i] == NULL) {
                     phypg_t *page = pmm->alloc(sizeof(phypg_t));
