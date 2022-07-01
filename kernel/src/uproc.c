@@ -219,13 +219,14 @@ void syscall_wait(Context *ctx) {
             yield();
         }
         void *vaddr = (void *)ctx->GPR1;
-        void *va_start = (void *)ROUNDDOWN(vaddr, cur->as.pgsize);
-        int offset = vaddr - va_start;
-        printf("%p\n", vaddr);
-        virtpg_t *vpage = virt_list_find(&cur->vps, va_start);
-        assert(vpage != NULL);
-        int *paddr = (int *)(vpage->page->pa + offset);
-        *paddr = cur->child_ret;
+        if (vaddr != NULL) {
+            void *va_start = (void *)ROUNDDOWN(vaddr, cur->as.pgsize);
+            int offset = vaddr - va_start;
+            virtpg_t *vpage = virt_list_find(&cur->vps, va_start);
+            assert(vpage != NULL);
+            int *paddr = (int *)(vpage->page->pa + offset);
+            *paddr = cur->child_ret;
+        }
         cur->child_ret = MAGIC_NUM;
         ctx->GPRx = 0;
     }
