@@ -323,7 +323,7 @@ void handler_DEAD(task_t *task, Context *ctx) {
 
 void handler_ERROR(task_t *task, Context *ctx) {
     panic_on(ienabled(), "Interrupt enabled in scheculer\n");
-    panic("Kernel Thread has wrong state.\n");
+    // panic("Kernel Thread has wrong state.\n");
 }
 
 void initpid() {
