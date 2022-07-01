@@ -169,6 +169,7 @@ void syscall_fork(Context *ctx) {
     virtpg_t *parent_itr = mytask()->vps.head->next;
     while (parent_itr != mytask()->vps.rear) {
         void *va = parent_itr->va;
+        printf("va=%p\n", va);
         phypg_t *page = parent_itr->page;
         assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
         map(&child->as, va, page->pa, MMAP_READ);
