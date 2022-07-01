@@ -239,43 +239,49 @@ void syscall_exit(Context *ctx) {
     exit();
 }
 
-void syscall_mmap(Context *ctx) {
-    // void *addr = (void*)ctx->GPR1;
-    // int len = (int)ctx->GPR2;
-    // // int prot = (int)ctx->GPR3;
-    // int flags = (int)ctx->GPR4;
+#define RIGHT(va, len) va + len
+void *find_avaliable(virtpg_list_t *list, void *va, int len) {
+    int pgsize = mytask()->as.pgsize;
+    void *left = (void *)ROUNDUP((intptr_t)va, pgsize);
+    len = (int)ROUNDUP((intptr_t)len, pgsize);
 
-    // void *addr_bound = (void *)ROUNDUP((intptr_t)addr, mytask()->as.pgsize);
-    // len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
-    // while (addr_bound + len < mytask()->as.area.end) {
-    //     bool succ = true;
-    //     for (int i = 0; i < NPAGES; i++) {
-    //         // printf("[%p, %p]\n", mytask()->vps[i], mytask()->vps[i] + mytask()->as.pgsize);
-    //         if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] + mytask()->as.pgsize <= addr_bound + len) {
-    //             addr_bound = mytask()->vps[i] + mytask()->as.pgsize;
-    //             succ = false;
-    //             break;
-    //         }
-    //     }
-    //     if (succ) {
-    //         assert(flags = MAP_PRIVATE);
-    //         void *end = addr_bound + len;
-    //         ctx->GPRx = (uint64_t)addr_bound;
-    //         // printf("addr = %p\n", addr_bound);
-    //         for (int i = 0; i < NPAGES; i++) {
-    //             if (mytask()->vps[i] == NULL) {
-    //                 phypg_t *page = pmm->alloc(sizeof(phypg_t));
-    //                 page->flags = flags;
-    //                 mytask()->vps[i] = addr_bound;
-    //                 mytask()->pps[i] = page;
-    //                 addr_bound += mytask()->as.pgsize;
-    //                 if (addr_bound == end) {
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //         return;
-    //     }
-    // }
-    // ctx->GPRx = -1;
+    virtpg_t *itr = list->head->next;
+    while (itr != list->rear) {
+        if (RIGHT(itr->va, pgsize) > left || itr->va < RIGHT(left, len)) {
+            left = RIGHT(itr->va, pgsize);
+        } else {
+            return left;
+        }
+        itr = itr->next;
+    }
+    assert(left > mytask()->as.area.start);
+    if (left < mytask()->as.area.end && RIGHT(left, len) <= mytask()->as.area.end) {
+        return left;
+    } else {
+        return NULL;
+    }
+}
+
+void syscall_mmap(Context *ctx) {
+    void *addr = (void*)ctx->GPR1;
+    int len = (int)ctx->GPR2;
+    int prot = (int)ctx->GPR3;
+    int flags = (int)ctx->GPR4;
+
+    len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
+    void *ava_vaddr = find_avaliable(&mytask()->vps, addr, len);
+    if (ava_vaddr == NULL) {
+        ctx->GPRx = -1;
+        return;
+    }
+    for (void *itr = ava_vaddr; itr < RIGHT(ava_vaddr, len); itr += mytask()->as.pgsize) {
+        phypg_t *ppage = pmm->alloc(sizeof(phypg_t));
+        ppage->flags = flags;
+        ppage->prot = prot;
+        ppage->pa = NULL;
+        ppage->refcnt = 0; //zero indicates that this physical page is not avaliable yet.
+        virtpg_t *vpage = virt_node_make(itr, ppage);
+        virt_list_insert(&mytask()->vps, vpage);
+    }
+    ctx->GPRx = (uint64_t)ava_vaddr;
 }
