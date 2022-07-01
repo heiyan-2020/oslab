@@ -27,9 +27,6 @@ static void *pmm_brk(size_t size) {
   heap_ptr = old + size;
   if (heap_ptr > upper_limit) {
     unlock(&heap_lk);
-    while (1) {
-      printf("out of memory\n");
-    }
     return NULL;
   }
   unlock(&heap_lk);
