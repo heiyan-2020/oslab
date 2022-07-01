@@ -252,6 +252,7 @@ void syscall_mmap(Context *ctx) {
                 printf("[%p, %p]\n", mytask()->vps[i], mytask()->vps + mytask()->as.pgsize);
                 addr_bound = mytask()->vps[i] + mytask()->as.pgsize;
                 succ = false;
+                break;
             }
         }
         if (succ) {
@@ -271,7 +272,7 @@ void syscall_mmap(Context *ctx) {
                     }
                 }
             }
-            break;
+            return;
         }
     }
     ctx->GPRx = -1;
