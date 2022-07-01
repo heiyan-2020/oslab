@@ -251,7 +251,6 @@ void syscall_mmap(Context *ctx) {
             if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] + mytask()->as.pgsize < addr_bound + len) {
                 addr_bound = mytask()->vps[i] + mytask()->as.pgsize;
                 succ = false;
-                break;
             }
         }
         if (succ) {
