@@ -169,6 +169,7 @@ void *malloc_generic(size_t size, heap_t* hp, int idx) {
     itr = itr->next;
   }
   //slow path. hp现有的pages全满(i.e. slab全满), 需要分配新的slab
+  printf("slow path\n");
   int kind, pages_count;
   if (size <= SMALL_SIZE) {
     kind = SMALL;
