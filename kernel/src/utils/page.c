@@ -95,7 +95,7 @@ void virt_list_insert(virtpg_list_t *list, virtpg_t *node) {
 
 void virt_list_remove(virtpg_list_t *list, virtpg_t *node) {
     printf("va=%p\n", node->va);
-    panic_on(virt_list_find(list, node->va) != NULL, "Node not exists\n");
+    panic_on(virt_list_find(list, node->va) == NULL, "Node not exists\n");
 
     node->prev->next = node->next;
     node->next->prev = node->prev;
