@@ -87,7 +87,7 @@ Context* page_fault(Event e, Context *ctx) {
         page_map(mytask(), va, page);
     } else {
         virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
-        if (ori_vpg->page->pa != NULL) {
+        if (ori_vpg->page != NULL) {
             //write an existed page without protect.
             phypg_t *ori_ppg = ori_vpg->page;
             MEMLOG("Clear map prot\n");
@@ -180,22 +180,6 @@ void syscall_fork(Context *ctx) {
         page->refcnt++;
         parent_itr = parent_itr->next;
     }
-
-    // for (int i = 0; i < NPAGES; i++) {
-    //     void *va = mytask()->vps[i];
-    //     if (va == NULL) continue;
-
-    //     phypg_t *page = mytask()->pps[i];
-    //     // phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
-    //     // memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
-    //     assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
-    //     map(&child->as, va, page->pa, MMAP_READ);
-    //     map(&mytask()->as, va, page->pa, MMAP_NONE);
-    //     map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
-    //     child->vps[i] = va;
-    //     child->pps[i] = page;
-    //     page->refcnt++;
-    // }
     assert(child->context->GPRx == 0);
     ctx->GPRx = child->pid;
 }
