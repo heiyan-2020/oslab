@@ -16,5 +16,6 @@ void syscall_sleep(Context *ctx);
 void syscall_fork(Context *ctx);
 void syscall_uptime(Context *ctx);
 void syscall_wait(Context *ctx);
+void syscall_mmap(Context *ctx);
 
 typedef void (*syscall_hanlder_t)(Context *);

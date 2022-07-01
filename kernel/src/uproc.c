@@ -22,6 +22,7 @@ static syscall_hanlder_t syscall_table[] = {
     [SYS_fork] = syscall_fork,
     [SYS_wait] = syscall_wait,
     [SYS_exit] = syscall_exit,
+    [SYS_mmap] = syscall_mmap
 };
 
 #ifdef STRACE
@@ -234,4 +235,28 @@ void syscall_exit(Context *ctx) {
     ctx->GPRx = ctx->GPR1; //返回值wait会用到
     mytask()->parent->child_ret = ctx->GPR1;
     exit();
+}
+
+void syscall_mmap(Context *ctx) {
+    void *addr = (void*)ctx->GPR1;
+    int len = (int)ctx->GPR2;
+    // int prot = (int)ctx->GPR3;
+    // int flags = (int)ctx->GPR4;
+
+    void *addr_bound = (void *)ROUNDUP((intptr_t)addr, mytask()->as.pgsize);
+    len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
+    while (addr_bound + len < mytask()->as.area.end) {
+        bool succ = true;
+        for (int i = 0; i < NPAGES; i++) {
+            if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] < addr_bound + len) {
+                addr_bound += mytask()->as.pgsize;
+                succ = false;
+                break;
+            }
+        }
+        if (succ) {
+            ctx->GPRx = (uint64_t)addr_bound;
+            printf("addr = %p\n", addr_bound);
+        }
+    }
 }
