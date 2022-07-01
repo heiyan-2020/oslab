@@ -270,7 +270,6 @@ void *find_avaliable(virtpg_list_t *list, void *va, int len) {
 }
 
 void syscall_mmap(Context *ctx) {
-    printf("size of address space = %d MB\n", (mytask()->as.area.end - mytask()->as.area.start) >> 20);
     void *addr = (void*)ctx->GPR1;
     int len = (int)ctx->GPR2;
     int prot = (int)ctx->GPR3;
