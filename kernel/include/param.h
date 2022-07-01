@@ -10,6 +10,6 @@
 #define KiB 1 << 10
 #define MiB 1 << 20
 
-#define STACK_SIZE (4 * KiB)
+#define STACK_SIZE (2 * KiB)
 #define MAGIC_NUM -2848
 #endif
