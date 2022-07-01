@@ -72,12 +72,12 @@ void teardown(task_t *task) {
     panic_on(schedule_lk.locked == 0, "schedule_lk should be locked\n");
     virtpg_t *itr = task->vps.head->next;
     while (itr != task->vps.rear) {
-        if (itr->page->refcnt == 1) {
-            pmm->free(itr->page->pa);
-            pmm->free(itr->page);
-        } else {
-            itr->page->refcnt--;
-        }
+        // if (itr->page->refcnt == 1) {
+        //     pmm->free(itr->page->pa);
+        //     pmm->free(itr->page);
+        // } else {
+        //     itr->page->refcnt--;
+        // }
         virtpg_t *temp = itr;
         itr = itr->next;
         virt_list_remove(&task->vps, temp);
