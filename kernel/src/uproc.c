@@ -260,4 +260,5 @@ void syscall_mmap(Context *ctx) {
             break;
         }
     }
+    ctx->GPRx = -1;
 }
