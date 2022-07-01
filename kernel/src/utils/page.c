@@ -28,8 +28,6 @@ phypg_t *alloc_page(int pgsize) {
     assert(page->pa != NULL);
     assert(page != NULL);
 
-    // page_list_insert(list, page);
-
     return page;
 }
 
