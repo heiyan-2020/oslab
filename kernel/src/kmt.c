@@ -1,4 +1,5 @@
 #include <kmt.h>
+#include <page.h>
 static void idles_init();
 static void cpus_init();
 /*============================================
@@ -69,16 +70,19 @@ int kcreate(task_t *task, const char *name, void (*entry)(void *arg), void *arg)
 void teardown(task_t *task) {
     panic_on(task->state != DEAD, "Reap some active tasks\n");
     panic_on(schedule_lk.locked == 0, "schedule_lk should be locked\n");
-    for (int i = 0; i < NPAGES; i++) {
-        if (task->vps[i] != NULL) {
-            if (task->pps[i]->refcnt == 1) {
-                pmm->free(task->pps[i]->pa);
-                pmm->free(task->pps[i]);
-            } else {
-                task->pps[i]->refcnt--;
-            }
+    virtpg_t *itr = task->vps.head;
+    while (itr != task->vps.rear) {
+        if (itr->page->refcnt == 1) {
+            pmm->free(itr->page->pa);
+            pmm->free(itr->page);
+        } else {
+            itr->page->refcnt--;
         }
+        virtpg_t *temp = itr;
+        itr = itr->next;
+        virt_list_remove(&task->vps, temp);
     }
+    virt_list_teardown(&task->vps);
     freepid(task->pid);
     unprotect(&task->as);
     task_list_remove(tlist_, task);

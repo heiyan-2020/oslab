@@ -35,14 +35,27 @@ typedef struct phypg {
   void          *pa;
   int           refcnt;
   int           flags;
-  // struct phypg  *prev;
-  // struct phypg  *next;
+  int           prot;
+  struct phypg  *prev;
+  struct phypg  *next;
 } phypg_t;
 
 typedef struct {
   phypg_t *head;
   phypg_t *rear;
 } phypg_list_t;
+
+typedef struct virtpg {
+  void          *va;
+  phypg_t       *page;
+  struct virtpg *prev;
+  struct virtpg *next;
+} virtpg_t;
+
+typedef struct {
+  virtpg_t    *head;
+  virtpg_t    *rear;
+} virtpg_list_t;
 
 typedef struct cond_node{
   task_t           *task;
@@ -75,8 +88,7 @@ struct task {
   struct task       *parent;
   Context           *context;
   AddrSpace         as;
-  void              *vps[NPAGES]; //allocated virtual pages.
-  phypg_t           *pps[NPAGES];
+  virtpg_list_t     vps; //allocated virtual pages.
   uint8_t           stack[STACK_SIZE];
 };
 

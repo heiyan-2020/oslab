@@ -1,5 +1,6 @@
 #include <task.h>
 #include <kmt.h>
+#include <page.h>
 extern task_list_t *tlist_;
 
 void task_list_make(task_list_t *list) {
@@ -51,9 +52,7 @@ void task_init(task_t *task, Context *ctx, const char *name) {
     task->child_ret = MAGIC_NUM;
     spin_init(&task->lk, name);
     task->pid = allocpid();
-    for (int i = 0; i < NPAGES; i++) {
-        task->vps[i] = NULL;
-    }
+    virt_list_make(&task->vps);
 
     task_list_insert(tlist_, task);
 }

@@ -64,14 +64,8 @@ void page_map(task_t *task, void *va, phypg_t *page) {
     assert(va != NULL);
 
     // printf("map: %p -> %p\n", va, pa);
-
-    for (int i = 0; i < NPAGES; i++) {
-        if (task->vps[i] == NULL) {
-            task->vps[i] = va;
-            task->pps[i] = page;
-            break;
-        }
-    }
+    virtpg_t *virtual_page = virt_node_make(va, page);
+    virt_list_insert(&task->vps, virtual_page);
     assert((uintptr_t)va == ROUNDDOWN(va,task->as.pgsize));
     assert((uintptr_t)pa == ROUNDDOWN(pa,task->as.pgsize));
     map(&task->as, va, pa, MMAP_READ | MMAP_WRITE);
@@ -84,43 +78,37 @@ Context* page_fault(Event e, Context *ctx) {
     phypg_t *page = NULL;
     if (e.cause == 1) {
         //read a new page.
-        page = alloc_page(page_list, as->pgsize);
+        page = alloc_page(as->pgsize);
         if (va == as->area.start) {
             memcpy(page->pa, _init, _init_len);
         }
         MEMLOG("read new page of %p\n", e.ref);
         page_map(mytask(), va, page);
     } else {
-        int num = -1;
-        for (int i = 0; i < NPAGES; i++) {
-            if (mytask()->vps[i] == va) {
-                num = i;
-                break;
-            }
-        }
-        if (num != -1) {
+        virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
+        if (ori_vpg != NULL) {
             //write an existed page without protect.
-            phypg_t *ori_page = mytask()->pps[num];
+            phypg_t *ori_ppg = ori_vpg->page;
             MEMLOG("Clear map prot\n");
-            assert((uintptr_t)ori_page->pa == ROUNDDOWN(ori_page->pa,as->pgsize));
-            map(as, va, ori_page->pa, MMAP_NONE);
+            assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+            map(as, va, ori_ppg->pa, MMAP_NONE);
 
-            if (ori_page->refcnt == 1) {
+            if (ori_ppg->refcnt == 1) {
                 MEMLOG("Last ref of %p on %p\n", ori_page->pa, va);
-                assert((uintptr_t)ori_page->pa == ROUNDDOWN(ori_page->pa,as->pgsize));
-                map(as, va, ori_page->pa, MMAP_READ | MMAP_WRITE);
+                assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+                map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
             } else {
-                ori_page->refcnt--;
-                page = alloc_page(page_list, as->pgsize);
-                memcpy(page->pa, ori_page->pa, as->pgsize);
-                mytask()->pps[num] = page;
+                ori_ppg->refcnt--;
+                page = alloc_page(as->pgsize);
+                memcpy(page->pa, ori_ppg->pa, as->pgsize);
+                ori_vpg->page = page;
                 MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
                 assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
                 map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
             }
         } else {
             //write a new page.
-            page = alloc_page(page_list, as->pgsize);
+            page = alloc_page(as->pgsize);
             MEMLOG("Write new page of %p\n", va);
             page_map(mytask(), va, page);
         }
@@ -177,21 +165,36 @@ void syscall_fork(Context *ctx) {
     child->context->GPRx = 0;
     child->parent = mytask();
 
-    for (int i = 0; i < NPAGES; i++) {
-        void *va = mytask()->vps[i];
-        if (va == NULL) continue;
-
-        phypg_t *page = mytask()->pps[i];
-        // phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
-        // memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
+    virtpg_t *parent_itr = mytask()->vps.head;
+    while (parent_itr != mytask()->vps.rear) {
+        void *va = parent_itr->va;
+        phypg_t *page = parent_itr->page;
         assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
         map(&child->as, va, page->pa, MMAP_READ);
         map(&mytask()->as, va, page->pa, MMAP_NONE);
         map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
-        child->vps[i] = va;
-        child->pps[i] = page;
+
+        virtpg_t *virt_page = virt_node_make(va, page);
+        virt_list_insert(&child->vps, virt_page);
         page->refcnt++;
+        parent_itr = parent_itr->next;
     }
+
+    // for (int i = 0; i < NPAGES; i++) {
+    //     void *va = mytask()->vps[i];
+    //     if (va == NULL) continue;
+
+    //     phypg_t *page = mytask()->pps[i];
+    //     // phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
+    //     // memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
+    //     assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
+    //     map(&child->as, va, page->pa, MMAP_READ);
+    //     map(&mytask()->as, va, page->pa, MMAP_NONE);
+    //     map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
+    //     child->vps[i] = va;
+    //     child->pps[i] = page;
+    //     page->refcnt++;
+    // }
     assert(child->context->GPRx == 0);
     ctx->GPRx = child->pid;
 }
@@ -201,7 +204,7 @@ void syscall_wait(Context *ctx) {
     bool has_children = false;
     task_t *cur = mytask();
     task_t *itr = tlist_->head->next;
-    while (itr != tlist_->head) {
+    while (itr != tlist_->rear) {
         if (itr->parent == cur) {
             has_children = true;
             break;
@@ -218,16 +221,12 @@ void syscall_wait(Context *ctx) {
         void *vaddr = (void *)ctx->GPR1;
         void *va_start = (void *)ROUNDDOWN(vaddr, cur->as.pgsize);
         int offset = vaddr - va_start;
-        for (int i = 0; i < NPAGES; i++) {
-            if (cur->vps[i] == va_start) {
-                void *pa_start = cur->pps[i]->pa;
-                *(int *)(pa_start + offset) = cur->child_ret;
-                cur->child_ret = MAGIC_NUM;
-                ctx->GPRx = 0;
-                return;
-            }
-        }
-        assert(0);
+        virtpg_t *vpage = virt_list_find(&cur->vps, va_start);
+        assert(vpage != NULL);
+        int *paddr = (int *)(vpage->page->pa + offset);
+        *paddr = cur->child_ret;
+        cur->child_ret = MAGIC_NUM;
+        ctx->GPRx = 0;
     }
 }
 
@@ -238,42 +237,42 @@ void syscall_exit(Context *ctx) {
 }
 
 void syscall_mmap(Context *ctx) {
-    void *addr = (void*)ctx->GPR1;
-    int len = (int)ctx->GPR2;
-    // int prot = (int)ctx->GPR3;
-    int flags = (int)ctx->GPR4;
+    // void *addr = (void*)ctx->GPR1;
+    // int len = (int)ctx->GPR2;
+    // // int prot = (int)ctx->GPR3;
+    // int flags = (int)ctx->GPR4;
 
-    void *addr_bound = (void *)ROUNDUP((intptr_t)addr, mytask()->as.pgsize);
-    len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
-    while (addr_bound + len < mytask()->as.area.end) {
-        bool succ = true;
-        for (int i = 0; i < NPAGES; i++) {
-            // printf("[%p, %p]\n", mytask()->vps[i], mytask()->vps[i] + mytask()->as.pgsize);
-            if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] + mytask()->as.pgsize <= addr_bound + len) {
-                addr_bound = mytask()->vps[i] + mytask()->as.pgsize;
-                succ = false;
-                break;
-            }
-        }
-        if (succ) {
-            assert(flags = MAP_PRIVATE);
-            void *end = addr_bound + len;
-            ctx->GPRx = (uint64_t)addr_bound;
-            // printf("addr = %p\n", addr_bound);
-            for (int i = 0; i < NPAGES; i++) {
-                if (mytask()->vps[i] == NULL) {
-                    phypg_t *page = pmm->alloc(sizeof(phypg_t));
-                    page->flags = flags;
-                    mytask()->vps[i] = addr_bound;
-                    mytask()->pps[i] = page;
-                    addr_bound += mytask()->as.pgsize;
-                    if (addr_bound == end) {
-                        break;
-                    }
-                }
-            }
-            return;
-        }
-    }
-    ctx->GPRx = -1;
+    // void *addr_bound = (void *)ROUNDUP((intptr_t)addr, mytask()->as.pgsize);
+    // len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
+    // while (addr_bound + len < mytask()->as.area.end) {
+    //     bool succ = true;
+    //     for (int i = 0; i < NPAGES; i++) {
+    //         // printf("[%p, %p]\n", mytask()->vps[i], mytask()->vps[i] + mytask()->as.pgsize);
+    //         if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] + mytask()->as.pgsize <= addr_bound + len) {
+    //             addr_bound = mytask()->vps[i] + mytask()->as.pgsize;
+    //             succ = false;
+    //             break;
+    //         }
+    //     }
+    //     if (succ) {
+    //         assert(flags = MAP_PRIVATE);
+    //         void *end = addr_bound + len;
+    //         ctx->GPRx = (uint64_t)addr_bound;
+    //         // printf("addr = %p\n", addr_bound);
+    //         for (int i = 0; i < NPAGES; i++) {
+    //             if (mytask()->vps[i] == NULL) {
+    //                 phypg_t *page = pmm->alloc(sizeof(phypg_t));
+    //                 page->flags = flags;
+    //                 mytask()->vps[i] = addr_bound;
+    //                 mytask()->pps[i] = page;
+    //                 addr_bound += mytask()->as.pgsize;
+    //                 if (addr_bound == end) {
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //         return;
+    //     }
+    // }
+    // ctx->GPRx = -1;
 }
