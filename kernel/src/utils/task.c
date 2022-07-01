@@ -31,7 +31,6 @@ void task_list_remove(task_list_t *list, task_t *node) {
     panic_on(itr == list->rear, "Node not exists\n");
     node->prev->next = node->next;
     node->next->prev = node->prev;
-    printf("free %d bytes\n", sizeof(task_t));
     pmm->free(node);
 }
 
