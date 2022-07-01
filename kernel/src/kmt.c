@@ -336,6 +336,15 @@ void freepid(int pid) {
 void exit() {
     spin_lock(&mytask()->lk);
     mytask()->state = DEAD;
+    for (int i = 0; i < NPAGES; i++) {
+        if (mytask()->vps[i] != NULL) {
+            if (mytask()->pps[i]->refcnt == 1) {
+                pmm->free(mytask()->pps[i]);
+            } else {
+                mytask()->pps[i]->refcnt--;
+            }
+        }
+    }
     spin_unlock(&mytask()->lk);
 
     yield();
