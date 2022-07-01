@@ -72,6 +72,7 @@ void teardown(task_t *task) {
     for (int i = 0; i < NPAGES; i++) {
         if (task->vps[i] != NULL) {
             if (task->pps[i]->refcnt == 1) {
+                pmm->free(task->pps[i]->pa);
                 pmm->free(task->pps[i]);
             } else {
                 task->pps[i]->refcnt--;
