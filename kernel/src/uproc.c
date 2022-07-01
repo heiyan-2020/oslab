@@ -306,5 +306,6 @@ void syscall_mmap(Context *ctx) {
         for (void *itr = addr; itr < RIGHT(addr, len); itr += mytask()->as.pgsize) {
             virt_list_remove(&mytask()->vps, virt_list_find(&mytask()->vps, itr));
         }
+        printf("size of address space = %d MB\n", (mytask()->as.area.end - mytask()->as.area.start) >> 20);
     }
 }
