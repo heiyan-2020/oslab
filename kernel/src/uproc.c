@@ -96,6 +96,7 @@ Context* page_fault(Event e, Context *ctx) {
     } else {
         if (e.cause == 1) {
             //read a mmaped page.
+            MEMLOG("Read mmaped page of %p\n", va);
             ori_vpg->page->pa = pmm->alloc(as->pgsize);
             assert(ori_vpg->page->refcnt == 0);
             ori_vpg->page->refcnt = 1;
@@ -103,6 +104,7 @@ Context* page_fault(Event e, Context *ctx) {
         } else {
             if (ori_vpg->page->pa == NULL) {
                 //write a mmaped page.
+                MEMLOG("Write mmaped page of %p\n", va);
                 ori_vpg->page->pa = pmm->alloc(as->pgsize);
                 assert(ori_vpg->page->refcnt == 0);
                 ori_vpg->page->refcnt = 1;
