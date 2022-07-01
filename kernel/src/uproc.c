@@ -80,6 +80,7 @@ Context* page_fault(Event e, Context *ctx) {
         //read a new page.
         page = alloc_page(as->pgsize);
         if (va == as->area.start) {
+            assert(_init_len < as->pgsize);
             memcpy(page->pa, _init, _init_len);
         }
         MEMLOG("read new page of %p\n", e.ref);
@@ -94,7 +95,7 @@ Context* page_fault(Event e, Context *ctx) {
             map(as, va, ori_ppg->pa, MMAP_NONE);
 
             if (ori_ppg->refcnt == 1) {
-                MEMLOG("Last ref of %p on %p\n", ori_page->pa, va);
+                MEMLOG("Last ref of %p on %p\n", ori_ppg->pa, va);
                 assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
                 map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
             } else {
