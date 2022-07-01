@@ -75,45 +75,100 @@ Context* page_fault(Event e, Context *ctx) {
     AddrSpace *as = &mytask()->as;
     void *va = (void *)(e.ref & ~(as->pgsize - 1));
     assert((uintptr_t)va == ROUNDDOWN(va,as->pgsize));
+    virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
     phypg_t *page = NULL;
-    if (e.cause == 1) {
-        //read a new page.
-        page = alloc_page(as->pgsize);
-        if (va == as->area.start) {
-            assert(_init_len < as->pgsize);
-            memcpy(page->pa, _init, _init_len);
-        }
-        MEMLOG("read new page of %p\n", e.ref);
-        page_map(mytask(), va, page);
-    } else {
-        virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
-        if (ori_vpg != NULL) {
-            //write an existed page without protect.
-            phypg_t *ori_ppg = ori_vpg->page;
-            MEMLOG("Clear map prot\n");
-            assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
-            map(as, va, ori_ppg->pa, MMAP_NONE);
-
-            if (ori_ppg->refcnt == 1) {
-                MEMLOG("Last ref of %p on %p\n", ori_ppg->pa, va);
-                assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
-                map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
-            } else {
-                ori_ppg->refcnt--;
-                page = alloc_page(as->pgsize);
-                memcpy(page->pa, ori_ppg->pa, as->pgsize);
-                ori_vpg->page = page;
-                MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
-                assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
-                map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
+    if (ori_vpg == NULL) {
+        if (e.cause == 1) {
+            //read a new page.
+            page = alloc_page(as->pgsize);
+            if (va == as->area.start) {
+                assert(_init_len < as->pgsize);
+                memcpy(page->pa, _init, _init_len);
             }
+            MEMLOG("read new page of %p\n", e.ref);
+            page_map(mytask(), va, page);
         } else {
             //write a new page.
             page = alloc_page(as->pgsize);
             MEMLOG("Write new page of %p\n", va);
             page_map(mytask(), va, page);
         }
+    } else {
+        if (e.cause == 1) {
+            //read a mmaped page.
+            ori_vpg->page->pa = pmm->alloc(as->pgsize);
+            assert(ori_vpg->page->refcnt == 0);
+            ori_vpg->page->refcnt = 1;
+            map(as, va, ori_vpg->page->pa, ori_vpg->page->prot);
+        } else {
+            if (ori_vpg->page->pa == NULL) {
+                //write a mmaped page.
+                ori_vpg->page->pa = pmm->alloc(as->pgsize);
+                assert(ori_vpg->page->refcnt == 0);
+                ori_vpg->page->refcnt = 1;
+                map(as, va, ori_vpg->page->pa, ori_vpg->page->prot);
+                assert(ori_vpg->page->prot == (MMAP_WRITE | MMAP_READ));
+            } else {
+                //write an existed page without protect.
+                phypg_t *ori_ppg = ori_vpg->page;
+                MEMLOG("Clear map prot\n");
+                assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+                map(as, va, ori_ppg->pa, MMAP_NONE);
+
+                if (ori_ppg->refcnt == 1) {
+                    MEMLOG("Last ref of %p on %p\n", ori_ppg->pa, va);
+                    assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+                    map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
+                } else {
+                    ori_ppg->refcnt--;
+                    page = alloc_page(as->pgsize);
+                    memcpy(page->pa, ori_ppg->pa, as->pgsize);
+                    ori_vpg->page = page;
+                    MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
+                    assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
+                    map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
+                }
+            }
+        }
     }
+    // if (e.cause == 1) {
+    //     //read a new page.
+    //     page = alloc_page(as->pgsize);
+    //     if (va == as->area.start) {
+    //         assert(_init_len < as->pgsize);
+    //         memcpy(page->pa, _init, _init_len);
+    //     }
+    //     MEMLOG("read new page of %p\n", e.ref);
+    //     page_map(mytask(), va, page);
+    // } else {
+    //     virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
+    //     if (ori_vpg != NULL) {
+    //         //write an existed page without protect.
+    //         phypg_t *ori_ppg = ori_vpg->page;
+    //         MEMLOG("Clear map prot\n");
+    //         assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+    //         map(as, va, ori_ppg->pa, MMAP_NONE);
+
+    //         if (ori_ppg->refcnt == 1) {
+    //             MEMLOG("Last ref of %p on %p\n", ori_ppg->pa, va);
+    //             assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+    //             map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
+    //         } else {
+    //             ori_ppg->refcnt--;
+    //             page = alloc_page(as->pgsize);
+    //             memcpy(page->pa, ori_ppg->pa, as->pgsize);
+    //             ori_vpg->page = page;
+    //             MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
+    //             assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
+    //             map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
+    //         }
+    //     } else {
+    //         //write a new page.
+    //         page = alloc_page(as->pgsize);
+    //         MEMLOG("Write new page of %p\n", va);
+    //         page_map(mytask(), va, page);
+    //     }
+    // }
     return NULL;
 }
 
