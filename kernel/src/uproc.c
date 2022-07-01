@@ -119,7 +119,7 @@ Context* page_fault(Event e, Context *ctx) {
 Context* syscall(Event e, Context *ctx) {
     // iset(true);
     #ifdef STRACE
-    printf("[strace]%s\n", syscall_name[ctx->GPRx]);
+    printf("[strace]%s %d\n", syscall_name[ctx->GPRx], mytask()->pid);
     #endif
     syscall_table[ctx->GPRx](ctx);
     // iset(false);
