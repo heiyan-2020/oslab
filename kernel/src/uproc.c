@@ -239,7 +239,7 @@ void syscall_exit(Context *ctx) {
     exit();
 }
 
-#define RIGHT(va, len) va + len
+#define RIGHT(va, len) (va + len)
 void *find_avaliable(virtpg_list_t *list, void *va, int len) {
     int pgsize = mytask()->as.pgsize;
     void *left = (void *)ROUNDUP((intptr_t)va, pgsize);
@@ -250,7 +250,7 @@ void *find_avaliable(virtpg_list_t *list, void *va, int len) {
 
     virtpg_t *itr = list->head->next;
     while (itr != list->rear) {
-        if (RIGHT(itr->va, pgsize) > left || itr->va < RIGHT(left, len)) {
+        if (RIGHT(itr->va, pgsize) > left && itr->va < RIGHT(left, len)) {
             left = RIGHT(itr->va, pgsize);
         } else {
             return left;
