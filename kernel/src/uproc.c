@@ -257,6 +257,7 @@ void syscall_mmap(Context *ctx) {
         if (succ) {
             ctx->GPRx = (uint64_t)addr_bound;
             printf("addr = %p\n", addr_bound);
+            break;
         }
     }
 }
