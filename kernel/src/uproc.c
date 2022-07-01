@@ -248,8 +248,8 @@ void syscall_mmap(Context *ctx) {
     while (addr_bound + len < mytask()->as.area.end) {
         bool succ = true;
         for (int i = 0; i < NPAGES; i++) {
+            printf("[%p, %p]\n", mytask()->vps[i], mytask()->vps + mytask()->as.pgsize);
             if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] + mytask()->as.pgsize < addr_bound + len) {
-                printf("[%p, %p]\n", mytask()->vps[i], mytask()->vps + mytask()->as.pgsize);
                 addr_bound = mytask()->vps[i] + mytask()->as.pgsize;
                 succ = false;
                 break;
