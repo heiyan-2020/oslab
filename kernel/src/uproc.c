@@ -181,16 +181,16 @@ void syscall_fork(Context *ctx) {
         void *va = mytask()->vps[i];
         if (va == NULL) continue;
 
-        // phypg_t *page = mytask()->pps[i];
-        phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
-        memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
+        phypg_t *page = mytask()->pps[i];
+        // phypg_t* page = alloc_page(page_list, mytask()->as.pgsize);
+        // memcpy(page->pa, mytask()->pps[i]->pa, mytask()->as.pgsize);
         assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
-        map(&child->as, va, page->pa, MMAP_READ | MMAP_WRITE);
-        // map(&mytask()->as, va, page->pa, MMAP_NONE);
-        // map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
+        map(&child->as, va, page->pa, MMAP_READ);
+        map(&mytask()->as, va, page->pa, MMAP_NONE);
+        map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
         child->vps[i] = va;
         child->pps[i] = page;
-        // page->refcnt++;
+        page->refcnt++;
     }
     assert(child->context->GPRx == 0);
     ctx->GPRx = child->pid;
@@ -257,7 +257,7 @@ void syscall_mmap(Context *ctx) {
         if (succ) {
             ctx->GPRx = (uint64_t)addr_bound;
             printf("addr = %p\n", addr_bound);
-            
+
             break;
         }
     }
