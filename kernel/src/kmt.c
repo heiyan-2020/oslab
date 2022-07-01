@@ -345,6 +345,7 @@ void exit() {
             }
         }
     }
+    unprotect(&mytask()->as);
     spin_unlock(&mytask()->lk);
 
     yield();
