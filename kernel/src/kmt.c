@@ -78,7 +78,7 @@ void teardown(task_t *task) {
             }
         }
     }
-    // unprotect(&mytask()->as);
+    unprotect(&task->as);
     task_list_remove(tlist_, task);
 }
 
