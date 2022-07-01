@@ -1,5 +1,6 @@
 #include <uproc.h>
 #include <page.h>
+#include <user.h>
 
 #include "initcode.inc"
 /*============================================
@@ -109,7 +110,7 @@ Context* page_fault(Event e, Context *ctx) {
                 assert(ori_vpg->page->refcnt == 0);
                 ori_vpg->page->refcnt = 1;
                 map(as, va, ori_vpg->page->pa, ori_vpg->page->prot);
-                assert(ori_vpg->page->prot == (MMAP_WRITE | MMAP_READ));
+                // assert(ori_vpg->page->prot == (MMAP_WRITE | MMAP_READ));
             } else {
                 //write an existed page without protect.
                 phypg_t *ori_ppg = ori_vpg->page;
@@ -273,10 +274,7 @@ void syscall_mmap(Context *ctx) {
     int len = (int)ctx->GPR2;
     int prot = (int)ctx->GPR3;
     int flags = (int)ctx->GPR4;
-    while (flags == MAP_UNMAP) {
-        printf("HahaVO\n");
-    }
-    // assert(flags == MAP_PRIVATE || flags == MAP_UNMAP);
+    assert(flags == MAP_PRIVATE || flags == MAP_UNMAP);
 
     if (flags == MAP_PRIVATE) {
         len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
@@ -288,7 +286,7 @@ void syscall_mmap(Context *ctx) {
         for (void *itr = ava_vaddr; itr < RIGHT(ava_vaddr, len); itr += mytask()->as.pgsize) {
             phypg_t *ppage = pmm->alloc(sizeof(phypg_t));
             ppage->flags = flags;
-            ppage->prot = prot;
+            ppage->prot = prot >> 1;//user.h中定义的权限和map时不一致， 这里转换为map中的规范
             ppage->pa = NULL;
             ppage->refcnt = 0; //zero indicates that this physical page is not avaliable yet.
             virtpg_t *vpage = virt_node_make(itr, ppage);
@@ -296,6 +294,14 @@ void syscall_mmap(Context *ctx) {
         }
         ctx->GPRx = (uint64_t)ava_vaddr;
     } else if (flags == MAP_UNMAP) {
-
+        assert(addr == (void *)ROUNDDOWN(addr, mytask()->as.pgsize));//addr must be multiple of pgsize.
+        len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);//align to pgsize.
+        for (void *itr = addr; itr < RIGHT(addr, len); itr += mytask()->as.pgsize) {
+            if (virt_list_find(&mytask()->vps, addr) == NULL) {
+                ctx->GPRx = -1;
+                return;
+            }
+        }
+        ctx->GPRx = 0;
     }
 }
