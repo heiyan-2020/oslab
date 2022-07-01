@@ -133,44 +133,6 @@ Context* page_fault(Event e, Context *ctx) {
             }
         }
     }
-    // if (e.cause == 1) {
-    //     //read a new page.
-    //     page = alloc_page(as->pgsize);
-    //     if (va == as->area.start) {
-    //         assert(_init_len < as->pgsize);
-    //         memcpy(page->pa, _init, _init_len);
-    //     }
-    //     MEMLOG("read new page of %p\n", e.ref);
-    //     page_map(mytask(), va, page);
-    // } else {
-    //     virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
-    //     if (ori_vpg != NULL) {
-    //         //write an existed page without protect.
-    //         phypg_t *ori_ppg = ori_vpg->page;
-    //         MEMLOG("Clear map prot\n");
-    //         assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
-    //         map(as, va, ori_ppg->pa, MMAP_NONE);
-
-    //         if (ori_ppg->refcnt == 1) {
-    //             MEMLOG("Last ref of %p on %p\n", ori_ppg->pa, va);
-    //             assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
-    //             map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
-    //         } else {
-    //             ori_ppg->refcnt--;
-    //             page = alloc_page(as->pgsize);
-    //             memcpy(page->pa, ori_ppg->pa, as->pgsize);
-    //             ori_vpg->page = page;
-    //             MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
-    //             assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
-    //             map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
-    //         }
-    //     } else {
-    //         //write a new page.
-    //         page = alloc_page(as->pgsize);
-    //         MEMLOG("Write new page of %p\n", va);
-    //         page_map(mytask(), va, page);
-    //     }
-    // }
     return NULL;
 }
 
@@ -311,21 +273,29 @@ void syscall_mmap(Context *ctx) {
     int len = (int)ctx->GPR2;
     int prot = (int)ctx->GPR3;
     int flags = (int)ctx->GPR4;
+    while (flags == MAP_UNMAP) {
+        printf("HahaVO\n");
+    }
+    // assert(flags == MAP_PRIVATE || flags == MAP_UNMAP);
 
-    len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
-    void *ava_vaddr = find_avaliable(&mytask()->vps, addr, len);
-    if (ava_vaddr == NULL) {
-        ctx->GPRx = -1;
-        return;
+    if (flags == MAP_PRIVATE) {
+        len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
+        void *ava_vaddr = find_avaliable(&mytask()->vps, addr, len);
+        if (ava_vaddr == NULL) {
+            ctx->GPRx = -1;
+            return;
+        }
+        for (void *itr = ava_vaddr; itr < RIGHT(ava_vaddr, len); itr += mytask()->as.pgsize) {
+            phypg_t *ppage = pmm->alloc(sizeof(phypg_t));
+            ppage->flags = flags;
+            ppage->prot = prot;
+            ppage->pa = NULL;
+            ppage->refcnt = 0; //zero indicates that this physical page is not avaliable yet.
+            virtpg_t *vpage = virt_node_make(itr, ppage);
+            virt_list_insert(&mytask()->vps, vpage);
+        }
+        ctx->GPRx = (uint64_t)ava_vaddr;
+    } else if (flags == MAP_UNMAP) {
+
     }
-    for (void *itr = ava_vaddr; itr < RIGHT(ava_vaddr, len); itr += mytask()->as.pgsize) {
-        phypg_t *ppage = pmm->alloc(sizeof(phypg_t));
-        ppage->flags = flags;
-        ppage->prot = prot;
-        ppage->pa = NULL;
-        ppage->refcnt = 0; //zero indicates that this physical page is not avaliable yet.
-        virtpg_t *vpage = virt_node_make(itr, ppage);
-        virt_list_insert(&mytask()->vps, vpage);
-    }
-    ctx->GPRx = (uint64_t)ava_vaddr;
 }
