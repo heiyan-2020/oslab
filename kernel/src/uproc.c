@@ -87,7 +87,7 @@ Context* page_fault(Event e, Context *ctx) {
         page_map(mytask(), va, page);
     } else {
         virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
-        if (ori_vpg->page != NULL) {
+        if (ori_vpg != NULL) {
             //write an existed page without protect.
             phypg_t *ori_ppg = ori_vpg->page;
             MEMLOG("Clear map prot\n");
