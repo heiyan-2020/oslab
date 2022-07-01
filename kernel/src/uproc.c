@@ -244,6 +244,9 @@ void *find_avaliable(virtpg_list_t *list, void *va, int len) {
     int pgsize = mytask()->as.pgsize;
     void *left = (void *)ROUNDUP((intptr_t)va, pgsize);
     len = (int)ROUNDUP((intptr_t)len, pgsize);
+    if (left == NULL) {
+        left = mytask()->as.area.start;
+    }
 
     virtpg_t *itr = list->head->next;
     while (itr != list->rear) {
@@ -254,7 +257,7 @@ void *find_avaliable(virtpg_list_t *list, void *va, int len) {
         }
         itr = itr->next;
     }
-    assert(left > mytask()->as.area.start);
+    assert(left >= mytask()->as.area.start);
     if (left < mytask()->as.area.end && RIGHT(left, len) <= mytask()->as.area.end) {
         return left;
     } else {
