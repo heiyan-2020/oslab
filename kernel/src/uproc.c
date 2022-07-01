@@ -174,6 +174,7 @@ void syscall_fork(Context *ctx) {
     child->context->cr3 = cr3;
     child->context->GPRx = 0;
     child->parent = mytask();
+    printf("don't alloc\n");
 
     for (int i = 0; i < NPAGES; i++) {
         void *va = mytask()->vps[i];
