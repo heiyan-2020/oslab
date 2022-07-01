@@ -79,6 +79,7 @@ void teardown(task_t *task) {
             }
         }
     }
+    freepid(task->pid);
     unprotect(&task->as);
     task_list_remove(tlist_, task);
 }
