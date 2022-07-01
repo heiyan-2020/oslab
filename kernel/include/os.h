@@ -34,8 +34,9 @@ typedef struct {
 typedef struct phypg {
   void          *pa;
   int           refcnt;
-  struct phypg  *prev;
-  struct phypg  *next;
+  int           flags;
+  // struct phypg  *prev;
+  // struct phypg  *next;
 } phypg_t;
 
 typedef struct {

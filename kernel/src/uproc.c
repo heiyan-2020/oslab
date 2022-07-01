@@ -46,7 +46,7 @@ void uproc_init() {
     os->on_irq(100, EVENT_PAGEFAULT, page_fault); //注册页故障处理程序
     os->on_irq(101, EVENT_SYSCALL, syscall); //注册页故障处理程序
 
-    page_list_make(page_list);
+    // page_list_make(page_list);
 
     MEMLOG("");
 }
@@ -241,23 +241,36 @@ void syscall_mmap(Context *ctx) {
     void *addr = (void*)ctx->GPR1;
     int len = (int)ctx->GPR2;
     // int prot = (int)ctx->GPR3;
-    // int flags = (int)ctx->GPR4;
+    int flags = (int)ctx->GPR4;
 
     void *addr_bound = (void *)ROUNDUP((intptr_t)addr, mytask()->as.pgsize);
     len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
     while (addr_bound + len < mytask()->as.area.end) {
         bool succ = true;
         for (int i = 0; i < NPAGES; i++) {
-            if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] < addr_bound + len) {
-                addr_bound += mytask()->as.pgsize;
+            if (mytask()->vps[i] >= addr_bound && mytask()->vps[i] + mytask()->as.pgsize < addr_bound + len) {
+                addr_bound = mytask()->vps[i] + mytask()->as.pgsize;
                 succ = false;
                 break;
             }
         }
         if (succ) {
+            assert(flags = MAP_PRIVATE);
+            void *end = addr_bound + len;
             ctx->GPRx = (uint64_t)addr_bound;
             printf("addr = %p\n", addr_bound);
-
+            for (int i = 0; i < NPAGES; i++) {
+                if (mytask()->vps[i] == NULL) {
+                    phypg_t *page = pmm->alloc(sizeof(phypg_t));
+                    page->flags = flags;
+                    mytask()->vps[i] = addr_bound;
+                    mytask()->pps[i] = page;
+                    addr_bound += mytask()->as.pgsize;
+                    if (addr_bound == end) {
+                        break;
+                    }
+                }
+            }
             break;
         }
     }

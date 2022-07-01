@@ -12,4 +12,7 @@
 
 #define STACK_SIZE (2 * KiB)
 #define MAGIC_NUM -2848
+#define MAP_SHARED 0x1
+#define MAP_PRIVATE 0x2
+#define MAP_UNMAP 0x3
 #endif
