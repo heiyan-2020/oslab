@@ -191,7 +191,7 @@ void syscall_fork(Context *ctx) {
         page->refcnt++;
     }
     assert(child->context->GPRx == 0);
-    ctx->GPRx = 1;
+    ctx->GPRx = child->pid;
 }
 
 void syscall_wait(Context *ctx) {
