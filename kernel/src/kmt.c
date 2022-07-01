@@ -69,6 +69,16 @@ int kcreate(task_t *task, const char *name, void (*entry)(void *arg), void *arg)
 void teardown(task_t *task) {
     panic_on(task->state != DEAD, "Reap some active tasks\n");
     panic_on(schedule_lk.locked == 0, "schedule_lk should be locked\n");
+    for (int i = 0; i < NPAGES; i++) {
+        if (task->vps[i] != NULL) {
+            if (task->pps[i]->refcnt == 1) {
+                pmm->free(task->pps[i]);
+            } else {
+                task->pps[i]->refcnt--;
+            }
+        }
+    }
+    unprotect(&mytask()->as);
     task_list_remove(tlist_, task);
 }
 
@@ -336,16 +346,6 @@ void freepid(int pid) {
 void exit() {
     spin_lock(&mytask()->lk);
     mytask()->state = DEAD;
-    for (int i = 0; i < NPAGES; i++) {
-        if (mytask()->vps[i] != NULL) {
-            if (mytask()->pps[i]->refcnt == 1) {
-                pmm->free(mytask()->pps[i]);
-            } else {
-                mytask()->pps[i]->refcnt--;
-            }
-        }
-    }
-    unprotect(&mytask()->as);
     spin_unlock(&mytask()->lk);
 
     yield();
