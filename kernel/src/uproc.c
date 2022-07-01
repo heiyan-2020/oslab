@@ -297,7 +297,7 @@ void syscall_mmap(Context *ctx) {
         assert(addr == (void *)ROUNDDOWN(addr, mytask()->as.pgsize));//addr must be multiple of pgsize.
         len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);//align to pgsize.
         for (void *itr = addr; itr < RIGHT(addr, len); itr += mytask()->as.pgsize) {
-            if (virt_list_find(&mytask()->vps, addr) == NULL) {
+            if (virt_list_find(&mytask()->vps, itr) == NULL) {
                 ctx->GPRx = -1;
                 return;
             }
