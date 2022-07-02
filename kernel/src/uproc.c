@@ -270,6 +270,7 @@ void syscall_wait(Context *ctx) {
 
 void syscall_exit(Context *ctx) {
     ctx->GPRx = ctx->GPR1; //返回值wait会用到
+    // kmt->spin_lock(&mytask()->parent->lk);
     mytask()->parent->child_ret = ctx->GPR1;
     exit();
 }

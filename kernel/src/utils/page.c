@@ -96,13 +96,14 @@ void virt_list_insert(virtpg_list_t *list, virtpg_t *node) {
 
 void virt_list_remove(virtpg_list_t *list, virtpg_t *node) {
     panic_on(virt_list_find(list, node->va) == NULL, "Node not exists\n");
-
+    kmt->spin_lock(&node->page->lk);
     if (node->page->refcnt == 1) {
         pmm->free(node->page->pa);
         pmm->free(node->page);
     } else {
         node->page->refcnt-- ;
     }
+    kmt->spin_unlock(&node->page->lk);
     node->prev->next = node->next;
     node->next->prev = node->prev;
     pmm->free(node);
