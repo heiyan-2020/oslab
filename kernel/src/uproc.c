@@ -274,7 +274,7 @@ void syscall_mmap(Context *ctx) {
     int len = (int)ctx->GPR2;
     int prot = (int)ctx->GPR3;
     int flags = (int)ctx->GPR4;
-    assert(flags == MAP_PRIVATE || flags == MAP_UNMAP);
+    // assert(flags == MAP_PRIVATE || flags == MAP_UNMAP);
 
     if (flags == MAP_PRIVATE) {
         len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
