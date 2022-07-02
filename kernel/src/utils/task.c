@@ -16,7 +16,7 @@ void task_list_make(task_list_t *list) {
 }
 
 void task_list_insert(task_list_t *list, task_t *node) {
-    assert(holding(&schedule_lk));
+    // assert(holding(&schedule_lk));
     node->next = list->rear;
     node->prev = list->rear->prev;
     list->rear->prev->next = node;
