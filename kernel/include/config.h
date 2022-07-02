@@ -6,8 +6,8 @@
 #define TEST_LAB3
 
 /* whether open log mode for debugging */
-#define LOCAL_LOG
-#define MEM_LOG
+// #define LOCAL_LOG
+// #define MEM_LOG
 
 /* choose version of sem */
 #define SEM_MODEL //model implementation, safe and slow.
@@ -16,6 +16,6 @@
 /*  whether open devices.   */
 // #define LOCAL_DEV
 
-#define STRACE
+// #define STRACE
 
 #endif
