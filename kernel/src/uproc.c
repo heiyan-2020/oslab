@@ -98,8 +98,12 @@ Context* page_fault(Event e, Context *ctx) {
         if (e.cause == 1) {
             //read a mmaped page.
             MEMLOG("Read mmaped page of %p\n", va);
-            ori_vpg->page->pa = pmm->alloc(as->pgsize);
-            map(as, va, ori_vpg->page->pa, ori_vpg->page->prot);
+            if (ori_vpg->page->pa == NULL) {
+                ori_vpg->page->pa = pmm->alloc(as->pgsize);
+                map(as, va, ori_vpg->page->pa, MMAP_READ);
+            } else {
+                map(as, va, ori_vpg->page->pa, MMAP_READ);
+            }
         } else {
             if (ori_vpg->page->pa == NULL) {
                 //write a mmaped page.
