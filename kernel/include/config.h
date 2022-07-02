@@ -2,8 +2,8 @@
 #define CONFIG_H
 
 /* whether open local tests */
-// #define TEST_LAB2
-#define TEST_LAB3
+#define TEST_LAB2
+// #define TEST_LAB3
 
 /* whether open log mode for debugging */
 // #define LOCAL_LOG

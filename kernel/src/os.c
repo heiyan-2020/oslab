@@ -37,7 +37,7 @@ static void os_init() {
     kmt->init();
 
     /*uproc*/
-    uproc->init();
+    // uproc->init();
     LOG("");
 
 #ifdef LOCAL_DEV

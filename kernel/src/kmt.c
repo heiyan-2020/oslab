@@ -170,6 +170,7 @@ Context *schedule(Event ev, Context *context) {
     state_table[cur->state](cur, context); //查表状态迁移
     do {
         task_t *temp = itr->next;
+        spin_lock(&itr->lk);
         if (itr->state == RUNNABLE && check_race(itr)) {
 
             itr->state = RUNNING;
@@ -179,11 +180,13 @@ Context *schedule(Event ev, Context *context) {
             mycpu()->prev = cur;
             LOG("prev:[%s], current:[%s]\n", cur->name, itr->name);
             panic_on(ienabled(), "\n");
+            spin_unlock(&itr->lk);
             spin_unlock(&schedule_lk);
             return itr->context;
         } else if (itr->state == DEAD && itr != mytask()) {
             handler_DEAD(itr, context);
         }
+        spin_unlock(&itr->lk);
         itr = temp;
     } while (itr != round_begin);
 
