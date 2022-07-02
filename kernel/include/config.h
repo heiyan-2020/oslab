@@ -6,7 +6,7 @@
 #define TEST_LAB3
 
 /* whether open log mode for debugging */
-// #define LOCAL_LOG
+#define LOCAL_LOG
 #define MEM_LOG
 
 /* choose version of sem */
