@@ -127,7 +127,7 @@ Context* page_fault(Event e, Context *ctx) {
                 MEMLOG("Clear map prot\n");
                 assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
                 map(as, va, ori_ppg->pa, MMAP_NONE);
-                if (ori_vpg->page->flags) {
+                if (ori_vpg->page->flags == MAP_SHARED) {
                     map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
                 } else {
                     if (ori_ppg->refcnt == 1) {
