@@ -100,36 +100,46 @@ Context* page_fault(Event e, Context *ctx) {
             MEMLOG("Read mmaped page of %p\n", va);
             ori_vpg->page->pa = pmm->alloc(as->pgsize);
             assert(ori_vpg->page->refcnt == 0);
-            ori_vpg->page->refcnt = 1;
             map(as, va, ori_vpg->page->pa, ori_vpg->page->prot);
         } else {
             if (ori_vpg->page->pa == NULL) {
                 //write a mmaped page.
                 MEMLOG("Write mmaped page of %p\n", va);
-                ori_vpg->page->pa = pmm->alloc(as->pgsize);
-                assert(ori_vpg->page->refcnt == 0);
-                ori_vpg->page->refcnt = 1;
+                if (ori_vpg->page->flags == MAP_PRIVATE) {
+                    phypg_t *ppage = pmm->alloc(sizeof(phypg_t));
+                    ppage->flags = ori_vpg->page->flags;
+                    ppage->prot = ori_vpg->page->prot;
+                    ppage->pa = pmm->alloc(as->pgsize);
+                    ppage->refcnt = 1; 
+                    ori_vpg->page->refcnt--;
+                    ori_vpg->page = ppage;
+                } else {
+                    assert(ori_vpg->page->flags == MAP_SHARED);
+                    ori_vpg->page->pa = pmm->alloc(as->pgsize);
+                }
                 map(as, va, ori_vpg->page->pa, ori_vpg->page->prot);
-                // assert(ori_vpg->page->prot == (MMAP_WRITE | MMAP_READ));
             } else {
                 //write an existed page without protect.
                 phypg_t *ori_ppg = ori_vpg->page;
                 MEMLOG("Clear map prot\n");
                 assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
                 map(as, va, ori_ppg->pa, MMAP_NONE);
-
-                if (ori_ppg->refcnt == 1) {
-                    MEMLOG("Last ref of %p on %p\n", ori_ppg->pa, va);
-                    assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+                if (ori_vpg->page->flags) {
                     map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
                 } else {
-                    ori_ppg->refcnt--;
-                    page = alloc_page(as->pgsize);
-                    memcpy(page->pa, ori_ppg->pa, as->pgsize);
-                    ori_vpg->page = page;
-                    MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
-                    assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
-                    map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
+                    if (ori_ppg->refcnt == 1) {
+                        MEMLOG("Last ref of %p on %p\n", ori_ppg->pa, va);
+                        assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
+                        map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
+                    } else {
+                        ori_ppg->refcnt--;
+                        page = alloc_page(as->pgsize);
+                        memcpy(page->pa, ori_ppg->pa, as->pgsize);
+                        ori_vpg->page = page;
+                        MEMLOG("Copy on Write of %p, new physical page = %p\n", va, page->pa);
+                        assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,as->pgsize));
+                        map(as, va, page->pa, MMAP_READ | MMAP_WRITE);
+                    }
                 }
             }
         }
@@ -199,8 +209,8 @@ void syscall_fork(Context *ctx) {
 
         virtpg_t *virt_page = virt_node_make(va, page);
         virt_list_insert(&child->vps, virt_page);
-        page->refcnt++;
         parent_itr = parent_itr->next;
+        page->refcnt++;
     }
     assert(child->context->GPRx == 0);
     ctx->GPRx = child->pid;
@@ -290,7 +300,7 @@ void syscall_mmap(Context *ctx) {
             ppage->flags = flags;
             ppage->prot = prot >> 1;//user.h中定义的权限和map时不一致， 这里转换为map中的规范
             ppage->pa = NULL;
-            ppage->refcnt = 0; //zero indicates that this physical page is not avaliable yet.
+            ppage->refcnt = 1; //zero indicates that this physical page is not avaliable yet.
             virtpg_t *vpage = virt_node_make(itr, ppage);
             virt_list_insert(&mytask()->vps, vpage);
         }
