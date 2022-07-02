@@ -276,7 +276,7 @@ void syscall_mmap(Context *ctx) {
     int flags = (int)ctx->GPR4;
     // assert(flags == MAP_PRIVATE || flags == MAP_UNMAP);
 
-    if (flags == MAP_PRIVATE) {
+    if (flags == MAP_PRIVATE || flags == MAP_SHARED) {
         len = (int)ROUNDUP((intptr_t)len, mytask()->as.pgsize);
         void *ava_vaddr = find_avaliable(&mytask()->vps, addr, len);
         if (ava_vaddr == NULL) {
