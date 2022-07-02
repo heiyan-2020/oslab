@@ -190,10 +190,12 @@ void syscall_fork(Context *ctx) {
     while (parent_itr != mytask()->vps.rear) {
         void *va = parent_itr->va;
         phypg_t *page = parent_itr->page;
-        assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
-        map(&child->as, va, page->pa, MMAP_READ);
-        map(&mytask()->as, va, page->pa, MMAP_NONE);
-        map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
+        if (page->pa != NULL) {
+            assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
+            map(&child->as, va, page->pa, MMAP_READ);
+            map(&mytask()->as, va, page->pa, MMAP_NONE);
+            map(&mytask()->as, va, page->pa, MMAP_READ); //mark as non-writable.
+        }
 
         virtpg_t *virt_page = virt_node_make(va, page);
         virt_list_insert(&child->vps, virt_page);
