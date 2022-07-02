@@ -104,10 +104,10 @@ void sem_test() {
         kmt->create(task, "yield", just_yield, NULL);
     }
 
-    for (int i = 0; i < 10; i++) {
-        task_t *task = pmm->alloc(sizeof(task_t));
-        kmt->create(task, "sum", print_star, NULL);
-    }
+    // for (int i = 0; i < 10; i++) {
+    //     task_t *task = pmm->alloc(sizeof(task_t));
+    //     kmt->create(task, "sum", print_star, NULL);
+    // }
 }
 
 void create_test() {
