@@ -22,7 +22,7 @@ MODULE_DEF(kmt) = {
 task_t *idles_[NCPU];
 task_list_t *tlist_;
 cpu_t cpus_[NCPU];
-spinlock_t schedule_lk;
+spinlock_t schedule_lk, pid_lk;
 int pid_queue[PID_BOUND + 1], pid_front = 0, pid_rear = 0; //用于维护pid的获取/释放
 
 /*  state handler for scheduler */
@@ -52,6 +52,7 @@ void kmt_init() {
     tlist_->rear->state = BLOCKED;
 
     spin_init(&schedule_lk, "schuedle_lk");
+    spin_init(&pid_lk, "pid_lk");
 #ifdef LOCAL_LOG
     LOG_INIT();
 #endif
@@ -69,15 +70,9 @@ int kcreate(task_t *task, const char *name, void (*entry)(void *arg), void *arg)
 
 void teardown(task_t *task) {
     panic_on(task->state != DEAD, "Reap some active tasks\n");
-    panic_on(schedule_lk.locked == 0, "schedule_lk should be locked\n");
+    panic_on(holding(&schedule_lk), "schedule_lk should be locked\n");
     virtpg_t *itr = task->vps.head->next;
     while (itr != task->vps.rear) {
-        // if (itr->page->refcnt == 1) {
-        //     pmm->free(itr->page->pa);
-        //     pmm->free(itr->page);
-        // } else {
-        //     itr->page->refcnt--;
-        // }
         virtpg_t *temp = itr;
         itr = itr->next;
         virt_list_remove(&task->vps, temp);
@@ -343,16 +338,20 @@ void initpid() {
 }
 
 int allocpid() {
+    spin_lock(&pid_lk);
     panic_on(pid_rear == pid_front, "Already empty\n");
     int ret = pid_queue[pid_front];
     pid_front = (pid_front + 1) % (PID_BOUND + 1);
+    spin_unlock(&pid_lk);
     return ret;
 }
 
 void freepid(int pid) {
+    spin_lock(&pid_lk);
     panic_on((pid_rear + 1) % (PID_BOUND + 1) == pid_front, "Already Full\n");
     pid_queue[pid_rear] = pid;
     pid_rear = (pid_rear + 1) % (PID_BOUND + 1);
+    spin_unlock(&pid_lk);
 }
 
 void exit() {

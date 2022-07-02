@@ -24,6 +24,7 @@ phypg_t *alloc_page(int pgsize) {
     phypg_t *page = pmm->alloc(sizeof(phypg_t));
     page->pa = pmm->alloc(pgsize);
     page->refcnt = 1;
+    kmt->spin_init(&page->lk, "page_lk");
 
     assert(page->pa != NULL);
     assert(page != NULL);

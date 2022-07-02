@@ -76,6 +76,7 @@ Context* page_fault(Event e, Context *ctx) {
     AddrSpace *as = &mytask()->as;
     void *va = (void *)(e.ref & ~(as->pgsize - 1));
     assert((uintptr_t)va == ROUNDDOWN(va,as->pgsize));
+    kmt->spin_lock(&mytask()->lk);
     virtpg_t *ori_vpg = virt_list_find(&mytask()->vps, va);
     phypg_t *page = NULL;
     if (ori_vpg == NULL) {
@@ -95,6 +96,7 @@ Context* page_fault(Event e, Context *ctx) {
             page_map(mytask(), va, page);
         }
     } else {
+        kmt->spin_lock(&ori_vpg->page->lk);
         if (e.cause == 1) {
             //read a mmaped page.
             MEMLOG("Read mmaped page of %p\n", va);
@@ -113,6 +115,7 @@ Context* page_fault(Event e, Context *ctx) {
                     ppage->flags = ori_vpg->page->flags;
                     ppage->prot = ori_vpg->page->prot;
                     ppage->pa = pmm->alloc(as->pgsize);
+                    spin_init(&ppage->lk, "page_lk");
                     ppage->refcnt = 1; 
                     ori_vpg->page->refcnt--;
                     ori_vpg->page = ppage;
@@ -146,7 +149,9 @@ Context* page_fault(Event e, Context *ctx) {
                 }
             }
         }
+        kmt->spin_unlock(&ori_vpg->page->lk);
     }
+    kmt->spin_unlock(&mytask()->lk);
     return NULL;
 }
 
@@ -191,7 +196,12 @@ void syscall_fork(Context *ctx) {
     strcpy(child_name, mytask()->name);
     strcat(child_name, name);
 
+    kmt->spin_lock(&schedule_lk);
     ucreate(child, child_name);
+    kmt->spin_unlock(&schedule_lk);
+
+    kmt->spin_lock(&child->lk);
+    kmt->spin_lock(&mytask()->lk);
     uintptr_t rsp0 = child->context->rsp0;
     void *cr3 = child->context->cr3;
 
@@ -205,6 +215,7 @@ void syscall_fork(Context *ctx) {
     while (parent_itr != mytask()->vps.rear) {
         void *va = parent_itr->va;
         phypg_t *page = parent_itr->page;
+        kmt->spin_lock(&page->lk);
         if (page->pa != NULL) {
             assert((uintptr_t)page->pa == ROUNDDOWN(page->pa,mytask()->as.pgsize));
             map(&child->as, va, page->pa, MMAP_READ);
@@ -216,9 +227,12 @@ void syscall_fork(Context *ctx) {
         virt_list_insert(&child->vps, virt_page);
         parent_itr = parent_itr->next;
         page->refcnt++;
+        kmt->spin_unlock(&page->lk);
     }
     assert(child->context->GPRx == 0);
     ctx->GPRx = child->pid;
+    kmt->spin_unlock(&mytask()->lk);
+    kmt->spin_unlock(&child->lk);
 }
 
 void syscall_wait(Context *ctx) {

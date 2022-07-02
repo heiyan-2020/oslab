@@ -36,6 +36,7 @@ typedef struct phypg {
   int           refcnt;
   int           flags;
   int           prot;
+  spinlock_t    lk;
   struct phypg  *prev;
   struct phypg  *next;
 } phypg_t;

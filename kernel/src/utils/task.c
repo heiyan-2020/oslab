@@ -2,6 +2,7 @@
 #include <kmt.h>
 #include <page.h>
 extern task_list_t *tlist_;
+extern spinlock_t schedule_lk;
 
 void task_list_make(task_list_t *list) {
     list->head = pmm->alloc(sizeof(task_t));
@@ -15,6 +16,7 @@ void task_list_make(task_list_t *list) {
 }
 
 void task_list_insert(task_list_t *list, task_t *node) {
+    assert(holding(&schedule_lk));
     node->next = list->rear;
     node->prev = list->rear->prev;
     list->rear->prev->next = node;
@@ -22,6 +24,7 @@ void task_list_insert(task_list_t *list, task_t *node) {
 }
 
 void task_list_remove(task_list_t *list, task_t *node) {
+    assert(holding(&schedule_lk));
     task_t *itr;
     for (itr = list->head->next; itr != list->rear; itr = itr->next) {
         if (itr == node) {
