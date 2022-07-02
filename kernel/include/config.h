@@ -10,8 +10,8 @@
 #define MEM_LOG
 
 /* choose version of sem */
-#define SEM_MODEL //model implementation, safe and slow.
-// #define SEM_SLEEP //sleep version, fast.
+// #define SEM_MODEL //model implementation, safe and slow.
+#define SEM_SLEEP //sleep version, fast.
 
 /*  whether open devices.   */
 // #define LOCAL_DEV
