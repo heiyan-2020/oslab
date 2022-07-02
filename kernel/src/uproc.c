@@ -96,41 +96,41 @@ Context* page_fault(Event e, Context *ctx) {
             page_map(mytask(), va, page);
         }
     } else {
-        kmt->spin_lock(&ori_vpg->page->lk);
+        phypg_t *ori_ppg = ori_vpg->page;
+        kmt->spin_lock(&ori_ppg->lk);
         if (e.cause == 1) {
             //read a mmaped page.
             MEMLOG("Read mmaped page of %p\n", va);
-            if (ori_vpg->page->pa == NULL) {
-                ori_vpg->page->pa = pmm->alloc(as->pgsize);
+            if (ori_ppg->pa == NULL) {
+                ori_ppg->pa = pmm->alloc(as->pgsize);
                 map(as, va, ori_vpg->page->pa, MMAP_READ);
             } else {
                 map(as, va, ori_vpg->page->pa, MMAP_READ);
             }
         } else {
-            if (ori_vpg->page->pa == NULL) {
+            if (ori_ppg->pa == NULL) {
                 //write a mmaped page.
                 MEMLOG("Write mmaped page of %p\n", va);
-                if (ori_vpg->page->flags == MAP_PRIVATE) {
+                if (ori_ppg->flags == MAP_PRIVATE) {
                     phypg_t *ppage = pmm->alloc(sizeof(phypg_t));
                     ppage->flags = ori_vpg->page->flags;
                     ppage->prot = ori_vpg->page->prot;
                     ppage->pa = pmm->alloc(as->pgsize);
                     spin_init(&ppage->lk, "page_lk");
                     ppage->refcnt = 1; 
-                    ori_vpg->page->refcnt--;
+                    ori_ppg->refcnt--;
                     ori_vpg->page = ppage;
                 } else {
                     assert(ori_vpg->page->flags == MAP_SHARED);
-                    ori_vpg->page->pa = pmm->alloc(as->pgsize);
+                    ori_ppg->pa = pmm->alloc(as->pgsize);
                 }
                 map(as, va, ori_vpg->page->pa, ori_vpg->page->prot);
             } else {
                 //write an existed page without protect.
-                phypg_t *ori_ppg = ori_vpg->page;
                 MEMLOG("Clear map prot\n");
                 assert((uintptr_t)ori_ppg->pa == ROUNDDOWN(ori_ppg->pa,as->pgsize));
                 map(as, va, ori_ppg->pa, MMAP_NONE);
-                if (ori_vpg->page->flags == MAP_SHARED) {
+                if (ori_ppg->flags == MAP_SHARED) {
                     map(as, va, ori_ppg->pa, MMAP_READ | MMAP_WRITE);
                 } else {
                     if (ori_ppg->refcnt == 1) {
@@ -149,7 +149,7 @@ Context* page_fault(Event e, Context *ctx) {
                 }
             }
         }
-        kmt->spin_unlock(&ori_vpg->page->lk);
+        kmt->spin_unlock(&ori_ppg->lk);
     }
     kmt->spin_unlock(&mytask()->lk);
     return NULL;
