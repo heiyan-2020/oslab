@@ -323,9 +323,8 @@ void handler_SLEEPY(task_t *task, Context *ctx) {
 void handler_DEAD(task_t *task, Context *ctx) {
     panic_on(task->state != DEAD, "Unsleepy thread enters sleepy handler\n");
     panic_on(ienabled(), "Interrupt enabled in scheculer\n");
-    spin_lock(&schedule_lk);
+    assert(holding(&schedule_lk));
     teardown(task);
-    spin_unlock(&schedule_lk);
 }
 
 void handler_ERROR(task_t *task, Context *ctx) {
