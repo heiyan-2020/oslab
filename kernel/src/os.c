@@ -45,7 +45,7 @@ static void os_init() {
 #endif
 
 #ifdef TEST_LAB2
-    create_test();
+    sem_test();
 #endif
 
 #ifdef TEST_LAB3
