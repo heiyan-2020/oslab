@@ -34,7 +34,7 @@ static const struct vm_area vm_areas[] = {
 #define uvm_area (vm_areas[0].area)
 
 static uintptr_t *kpt;
-static void *(*pgalloc)(size_t size);
+static void *(*pgalloc)(int size);
 static void (*pgfree)(void *);
 
 static void *pgallocz() {
@@ -86,7 +86,7 @@ static void teardown(int level, uintptr_t *pt) {
   }
 }
 
-bool vme_init(void *(*_pgalloc)(size_t size), void (*_pgfree)(void *)) {
+bool vme_init(void *(*_pgalloc)(int size), void (*_pgfree)(void *)) {
   panic_on(cpu_current() != 0, "init VME in non-bootstrap CPU");
   pgalloc = _pgalloc;
   pgfree  = _pgfree;
@@ -140,8 +140,8 @@ void unprotect(AddrSpace *as) {
 
 void map(AddrSpace *as, void *va, void *pa, int prot) {
   panic_on(!IN_RANGE(va, uvm_area), "mapping an invalid address");
-  panic_on((uintptr_t)va != ROUNDDOWN(va, mmu.pgsize) ||
-           (uintptr_t)pa != ROUNDDOWN(pa, mmu.pgsize), "non-page-boundary address");
+  panic_on((uintptr_t)va != ROUNDDOWN(va, mmu.pgsize), "non-page-boundary address");
+  panic_on((uintptr_t)pa != ROUNDDOWN(pa, mmu.pgsize), "paddr not bound");
 
   uintptr_t *ptentry = ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
   if (prot == MMAP_NONE) {

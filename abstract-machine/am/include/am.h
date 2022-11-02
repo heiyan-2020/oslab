@@ -62,7 +62,7 @@ void     iset        (bool enable);
 Context *kcontext    (Area kstack, void (*entry)(void *), void *arg);
 
 // ----------------------- VME: Virtual Memory -----------------------
-bool     vme_init    (void *(*pgalloc)(size_t), void (*pgfree)(void *));
+bool     vme_init    (void *(*pgalloc)(int), void (*pgfree)(void *));
 void     protect     (AddrSpace *as);
 void     unprotect   (AddrSpace *as);
 void     map         (AddrSpace *as, void *vaddr, void *paddr, int prot);

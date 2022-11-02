@@ -19,4 +19,4 @@ test: git
 		-o build/test
 	@build/test 0
 qemu_d:
-	qemu-system-x86_64 --serial mon:stdio -machine accel=tcg -smp "1" -drive format=raw,file=/home/heiyan/os-workbench-2022/kernel/build/kernel-x86_64-qemu -S  -s -d int -no-reboot -no-shutdown
+	qemu-system-x86_64 --serial mon:stdio -machine accel=tcg -smp "1" -drive format=raw,file=$(PWD)/build/kernel-x86_64-qemu -S  -s -no-reboot -no-shutdown

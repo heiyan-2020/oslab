@@ -1,0 +1,58 @@
+# Building kernel-run [x86_64-qemu]
+# Building am-archive [x86_64-qemu]
+# Building klib-archive [x86_64-qemu]
++ LD -> build/kernel-x86_64-qemu.elf
+# Creating image [x86_64-qemu]
++ CREATE -> build/kernel-x86_64-qemu
+[uproc_init 52][0]: Hello, World
+Hello, World
+[page_fault 89][0]: read new page of 0x0000100000000000
+[page_fault 94][0]: Write new page of 0x0000107FFFFFF000
+[strace]fork 3
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C1A000
+[strace]wait 3
+[strace]fork 4
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C12000
+[strace]wait 4
+[strace]fork 5
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C2A000
+[strace]wait 5
+[strace]fork 6
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C22000
+[strace]wait 6
+[strace]fork 7
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C3A000
+[strace]wait 7
+[strace]fork 8
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C32000
+[strace]wait 8
+[strace]fork 9
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C4A000
+[strace]wait 9
+[strace]exit 10
+[strace]fork 9
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C42000
+[strace]wait 9
+[strace]fork 11
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C4E000
+[strace]wait 11
+[strace]fork 12
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C5A000
+[strace]wait 12
+[strace]fork 13
+[page_fault 127][0]: Clear map prot
+[page_fault 142][0]: Copy on Write of 0x0000107FFFFFF000, new physical page = 0x0000000000C52000
+[strace]wait 13
+[strace]fork 14
+Assertion fail at /home/heiyan/operating_system_lab/kernel/src/uproc.c:220
+Bail out! ERROR:/build/qemu-FzOxDs/qemu-4.2/cpus.c:1795:qemu_tcg_cpu_thread_fn: assertion failed: (cpu->halted)
